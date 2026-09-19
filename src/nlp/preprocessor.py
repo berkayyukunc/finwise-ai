@@ -8,8 +8,8 @@ metin problemlerini çözer:
 2. PDF font bozulmalarını (Latin-1 / Latin-5 karışıklığı: 'Ý' -> 'İ', 'Þ' -> 'Ş') onarır.
 3. Tam diakritik katlama (folding): yalnızca ı/i değil, 6 Türkçe çiftin tamamı
    (ç/c, ğ/g, ı/i, ö/o, ş/s, ü/u) ASCII eşdeğerine indirgenir.
-4. POS unvan çöplerini ("TİC", "A.Ş.", "LTD", "ŞB", "İST", "TR") ve ödeme kuruluşu
-   öneklerini ("IYZICO/", "PAYTR*") YALNIZCA tam kelime olarak temizler.
+4. POS unvan çöplerini ("TİC", "A.Ş.", "LTD", "ŞB", "İST", "TR"), ödeme kuruluşu öneklerini
+   ("IYZICO/", "MokaUnited/") ve taksit eklerini ("1. Taksit") YALNIZCA tam kelime olarak temizler.
 5. Tarih, tutar ve referans kodlarını genel etiketlerle (<date>, <cur>, <num>) maskeler.
 
 Eğitici Not (Mülakat İçin):
@@ -72,9 +72,22 @@ class TurkishFinancialNLPPreprocessor:
     ]
     NOISE_REGEX = re.compile(r"\b(?:" + "|".join(NOISE_TERMS) + r")(?!\w)")
 
-    # Ödeme kuruluşu / sanal POS önekleri kategori bilgisi taşımaz: "IYZICO/ZARA" -> "ZARA"
+    # Ödeme kuruluşu / sanal POS önekleri kategori bilgisi taşımaz: "MokaUnited/BERSHKA G" -> "BERSHKA G".
+    # Bunlar temizlenmezse önek n-gram'ları markayı bastırır (ölçüldü: BERSHKA tek başına %99,6 Giyim,
+    # "MokaUnited/BERSHKA G" ise %88 Ulaşım). Liste Türkiye'deki yaygın ödeme kuruluşlarını kapsar.
+    FACILITATORS = [
+        "iyzico", "iyz", "paytr", "pyt", "param", "sipay", "payu", "papara", "sbm", "bd",
+        "mokaunited", "moka", "vallet", "craftgate", "paratika", "paycell", "ininal", "turkpara",
+        "paynet", "payten", "birlesikodeme", "ozanpay", "tami", "hepsipay", "paribu", "elekse",
+    ]
     FACILITATOR_REGEX = re.compile(
-        r"^\s*(?:iyzico|iyz|paytr|pyt|param|sipay|payu|papara|sbm|bd)\s*[*/]\s*"
+        r"^\s*(?:" + "|".join(FACILITATORS) + r")\s*[*/\-]\s*", re.IGNORECASE
+    )
+
+    # Taksit eki ("1. Taksit", "01.Tak", "3/6 Taksit") kategori sinyali TAŞIMAZ; taksit bilgisini
+    # zaten ayrıştırıcı ayrı bir alana çıkarır. Metinde bırakılırsa modeli yanıltan sayı artığı üretir.
+    INSTALLMENT_SUFFIX_REGEX = re.compile(
+        r"\s*\(?\d{1,2}\s*[./]?\s*(?:/\s*\d{1,2}\s*)?tak(?:s[iı]t|s[iı]d[iı])?\b\.?\)?", re.IGNORECASE
     )
 
     DATE_REGEX = re.compile(r"\b\d{1,2}[./]\d{1,2}[./]\d{2,4}\b")
@@ -128,8 +141,9 @@ class TurkishFinancialNLPPreprocessor:
         # 1. Unicode + font onarımı, 2. Tam katlama (küçük harf + ASCII)
         t = cls.fold(raw_pos_text)
 
-        # 3. Ödeme kuruluşu öneki
+        # 3. Ödeme kuruluşu öneki ve taksit eki
         t = cls.FACILITATOR_REGEX.sub(" ", t)
+        t = cls.INSTALLMENT_SUFFIX_REGEX.sub(" ", t)
 
         # 4. Tarih ve tutarları maskele
         t = cls.DATE_REGEX.sub(" <date> ", t)
@@ -142,7 +156,9 @@ class TurkishFinancialNLPPreprocessor:
         if mask_numbers:
             t = cls.NUMBER_REGEX.sub(" <num> ", t)
 
-        # 7. Özel karakterler ve fazla boşluklar
+        # 7. Özel karakterler, POS alanı kırpmasından kalan tek harf artıkları ve fazla boşluklar.
+        #    ("STRADIVARIUS IZMIR I" -> şehir silinince sonda anlamsız bir 'i' kalır.)
         t = re.sub(r"[^\w\s<>]", " ", t)
+        t = re.sub(r"(?<!\S)[^\W\d_](?!\S)", " ", t)
         t = re.sub(r"\s+", " ", t).strip()
         return t

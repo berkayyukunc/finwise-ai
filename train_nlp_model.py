@@ -22,7 +22,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     logger.info("1. Sentetik Türkçe POS veri seti üretiliyor...")
-    df = generate_pos_dataset(num_samples=18000, random_seed=42)
+    df = generate_pos_dataset(num_samples=30000, random_seed=42)
     os.makedirs("data", exist_ok=True)
     df.to_csv("data/synthetic_pos_dataset.csv", index=False)
 

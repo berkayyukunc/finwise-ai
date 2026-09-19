@@ -231,7 +231,7 @@ class POSClassifierPipeline:
             "ece": expected_calibration_error(conf, correct.astype(float)),
             "by_difficulty": {
                 str(level): {"n": int(m.sum()), "accuracy": float(correct[m].mean())}
-                for level in ["easy", "medium", "hard"]
+                for level in ["easy", "medium", "hard", "field"]
                 if (m := (gold["difficulty"] == level).to_numpy()).any()
             },
             "report": classification_report(y, pred, zero_division=0),

@@ -28,18 +28,19 @@ Aşağıdaki her sayı `make train`, `make benchmark` ya da `make test` ile yeni
 
 | Alan | Ölçüm | Sonuç |
 | :-- | :-- | :-- |
-| **POS sınıflandırma** | Altın set (170 elle yazılmış satır, eğitimde yok) macro-F1 | **0,828** |
-| | Görülmemiş işyeri (GroupShuffleSplit) macro-F1 | 0,720 → esnaf+anahtar kelime **0,979**, anahtar kelimesiz yeni marka 0,496 (beklenen sınır) |
-| | Görülmüş marka macro-F1 (iyimser üst sınır) | 0,978 |
-| | Emin-ama-yanlış oranı (güven ≥ 0,90) | %4,7 |
-| | Gecikme / boyut | 0,57 ms tekil · 0,05 ms/satır batch · 2 MB |
+| **POS sınıflandırma** | Altın set (195 satır, eğitimde yok) macro-F1 | **0,837** |
+| | Görülmemiş işyeri (GroupShuffleSplit) macro-F1 | 0,762 → esnaf+anahtar kelime **0,949**, anahtar kelimesiz yeni marka 0,555 (beklenen sınır) |
+| | **Gerçek ekstre satırları** (ilk sürümün tamamını yanlış bildiği 10 satır) | **10/10 doğru** |
+| | Görülmüş marka macro-F1 (iyimser üst sınır) | 0,965 |
+| | Emin-ama-yanlış oranı (güven ≥ 0,90) | %2,1 |
+| | Gecikme / boyut | 0,79 ms tekil · 0,06 ms/satır batch · 2,2 MB |
 | **Document AI** | 8 farklı yerleşim: işlem sayısı, dönem borcu, asgari, son 4 hane, tarihler | 8/8 birebir; sağlama farkı 0,00 TL |
 | | PII sızıntısı (ad, TC, adres, 3. kişi adı, metadata; tüm sayfalar) | 0 |
 | | **Gerçek ekstrelerde saha doğrulaması** (yazarın kendi ekstreleri; repoda yer almaz) | 5 Vakıfbank PDF'i uçtan uca: 5/5 sağlama tuttu (fark 0,00 TL). 4 Ziraat ekstresi ekran görüntüsünden aktarılan satırlarla: 4/4 (PDF metin çıkarımı sınanmadı) |
 | **Tahmin** | Aylık %95 aralığın ampirik kapsaması (100 simülasyon) | **%92** |
 | **Anomali** | Anomalisiz sentetik ekstrelerde yanlış alarm | **%0,5** (ekstrelerin %76'sında hiç alarm yok) |
 | **Kümeleme** | Centroid→arketip eşleme doğruluğu | 6/6 (4 farklı tohumda) · saflık > %95 |
-| **Kalite** | Test / kapsama / lint | 273 test · %95 satır+dal kapsaması · ruff temiz |
+| **Kalite** | Test / kapsama / lint | 282 test · %95 satır+dal kapsaması · ruff temiz |
 
 > **İlk sürümle fark:** İlk sürüm "%99,9 F1" bildiriyordu; bu, sentetik veride rastgele ayrımın yol açtığı şablon sızıntısıydı (test satırlarının %35,5'i eğitimde vardı; markalar ayrılınca F1 0,205'e düşüyordu). Hikâyenin tamamı: [`PROJE_AMACI_VE_DEGERLENDIRME.md`](PROJE_AMACI_VE_DEGERLENDIRME.md).
 
@@ -88,7 +89,7 @@ flowchart TD
 python3 -m venv venv && source venv/bin/activate
 make install        # kilitli bağımlılıklar + geliştirme araçları
 make train          # sentetik veri → sızıntısız değerlendirme → model + metrik JSON
-make check          # ruff + 273 test + %85 kapsama kapısı
+make check          # ruff + 282 test + %85 kapsama kapısı
 make run            # http://localhost:8501
 ```
 

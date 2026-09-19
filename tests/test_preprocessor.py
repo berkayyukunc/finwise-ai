@@ -45,6 +45,13 @@ def test_noise_regex_never_eats_brand_prefixes(raw, expected):
 
 
 @pytest.mark.parametrize("raw,expected", [
+    # Ödeme kuruluşu önekleri ve taksit ekleri kategori sinyali taşımaz: markayı bastırmamalılar
+    ("MokaUnited/BERSHKA G 1. Taksit", "bershka"),
+    ("MokaUnited/PULL AND 1. Taksit", "pull and"),
+    ("VALLET/KOTON 3. Taksit", "koton"),
+    ("CRAFTGATE*DEFACTO", "defacto"),
+    ("23/05 S/BEYMEN 01.Tak ISTANBUL", "<num> beymen"),
+    ("STRADIVARIUS IZMIR I", "stradivarius"),          # kırpmadan kalan tek harf artığı atılır
     ("MIGROS TIC A.S. IST TR", "migros"),
     ("AKBANK T.A.S.", "akbank"),
     ("DEMIR SAN. VE TIC. LTD. STI.", "demir ve"),

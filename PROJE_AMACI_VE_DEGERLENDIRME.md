@@ -33,7 +33,7 @@ Piyasadaki CRUD harcama takipçileri ve LLM sarmalayıcıları bir adayın ML, N
 | 10 | Anomalisiz ekstrede %5-8 işlem işaretleniyor; doküman "5D" diyor, kod 4D | Sabit `contamination`; ortalama/std maskeleme etkisi | Medyan/MAD (log tutar) + mükerrer çekim kuralı + destekleyici IF (mutlak eşik) | Yanlış alarm **%0,5** · `test_masking_effect_small_sample` |
 | 11 | 6 arketip etiketinin **6'sı da yanlış**; boş ekstre = "Taksit Mimarı" | K-Means küme kimliği keyfidir; sabit `ARCHETYPE_NAMES[id]` | Centroid'ler prototiplere Macar algoritmasıyla eşlenir; yetersiz veride etiket yok | 6/6 doğru, 4 tohumda · saflık > %95 |
 | 12 | `rag/agent.py` = 5 `elif`; `question.lower()` Türkçe I hatası (`GIDA`, `DIŞARI` tanınmıyor); anlaşılmayan soru özete düşüyor | İsimlendirme gerçeği yansıtmıyor | `src/copilot/`: niyet yönlendirici → araçlar → şablon; katlama ile normalizasyon; dürüst "bilmiyorum" | `test_every_amount_in_answer_comes_from_tool_result`, 16 yönlendirme testi |
-| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 273 test, %95 kapsama |
+| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 282 test, %95 kapsama |
 
 Denetimin ortaya çıkardığı, v1 raporunda **olmayan** üç hata da çözüldü: (a) örnek PDF'lerde İ/Ş/Ğ harfleri `·` olarak basılıyordu (`TÜRK·YE ·· BANKASI`) ve bir "font onarımı" eşlemesi bunu gizliyordu; (b) anomali modülünde işyeri anahtarı sayıları maskelediği için farklı şubeler mükerrer çekim sayılıyordu; (c) tahmin modeli seçim ölçütü (14 günlük toplam hata) haftalık mevsimselliği yapısal olarak göremiyordu → günlük RMSE'ye geçildi. Üçü de yeni yazılan testler tarafından yakalandı.
 
@@ -51,6 +51,27 @@ v2 yayımlandıktan sonra yazarın kendi Vakıfbank ekstresi yüklendi ve sistem
 | İki sütunlu başlıkta etiketsiz adres bloğu | Adres karartılmıyordu (sütunlar iç içe geçince tarama duruyordu) | Hizasız satırı atla + ilk sayfa başlık bölgesi her zaman karartılır |
 
 Sonuç: 5 gerçek Vakıfbank PDF'inin 5'inde sağlama uçtan uca kuruşu kuruşuna tuttu; 4 Ziraat ekstresinde de tuttu, ancak bunlar ekran görüntüsünden elle aktarılan satırlarla sınandı (Ziraat PDF'inin metin çıkarımı doğrulanmadı). Gerçek ekstreler ve onlardan alınan hiçbir değer repoda yer almaz; iki sentetik yerleşim bu yapıları taklit edecek biçimde yeniden kuruldu ve 31 yeni test eklendi. Ders: **sentetik test verisini, test edilen varsayımı bilen kişi üretirse doğrulama döngüseldir** — v1 denetiminde başkasına söylenen bu cümle, v2'nin kendi ayrıştırıcısı için de geçerliydi.
+
+### İkinci saha testi: sınıflandırıcı gerçek işyeri adlarında
+
+Kullanıcı kendi ekstresindeki giyim harcamalarının "Akaryakıt / Ulaşım" olarak etiketlendiğini bildirdi. Tek tek marka
+eklemek yerine kök neden ölçüldü — ve dördü de sistemikti:
+
+| Bulgu | Kanıt / kök neden | Çözüm |
+| :-- | :-- | :-- |
+| Ödeme kuruluşu öneki markayı bastırıyor | `BERSHKA` tek başına **%99,6 Giyim**, `MokaUnited/BERSHKA G` **%88 Ulaşım** | Önek listesi 26 kuruluşa çıkarıldı (MokaUnited, Vallet, Craftgate, Paycell …) |
+| `1. Taksit` eki gürültü üretiyor | temizlenmiş metin `… <num> taksit` | Taksit eki temizleniyor (bilgi zaten ayrıştırıcıda) |
+| POS alanı kırpması tek harf artığı bırakıyor | `STRADIVARIUS IZMIR I` → şehir silinince dangling `i` | Tek harf artıkları atılıyor |
+| Sözlük dar + konaklama kategorisi yok | `STRADIVARIUS` %39 Belirsiz, `Booking.com` %44 Belirsiz | Marka sözlüğü ~100 → ~300; **Seyahat / Konaklama** kategorisi eklendi |
+
+Ek olarak sentetik üretici gerçekçileştirildi: kırpma artık **önek eklendikten sonra** uygulanıyor (gerçekte olan da bu:
+`MokaUnited/PULL AND BEAR` → `MokaUnited/PULL AND`) ve taksit ekleri veri setine enjekte ediliyor.
+
+**Ölçülen sonuç:** kullanıcının 10 gerçek satırının tamamı doğru (önce 0/10), sızıntısız metrik 0,720 → **0,762**
+(görülmemiş marka 0,496 → 0,555), emin-ama-yanlış oranı %4,7 → **%2,1**, ECE 0,103 → **0,067**.
+
+**Dürüstlük notu:** Bu satırlar altın sete `field` katmanı olarak eklendi ve eğitimde kullanılmıyor. Altın sette hâlâ
+kaçan 6 giyim satırı var; bunları tek tek eğitim verisine eklemek ölçüm setini bozardı, o yüzden yapılmadı.
 
 ---
 
@@ -88,7 +109,7 @@ Ayrıntı: [`SECURITY.md`](SECURITY.md). Özet: sistem PCI-DSS/KVKK uyumu **iddi
 │   ├── clustering/archetypes.py
 │   ├── copilot/agent.py                # (eski adı: rag/) niyet yönlendirici + deterministik araçlar
 │   └── utils/statement_loader.py       # PDF → DataFrame hattının tek giriş noktası
-├── tests/                              # 273 test (aşağıda)
+├── tests/                              # 282 test (aşağıda)
 ├── scripts/                            # generate_synthetic_pdf (8 yerleşim + truth.json) · benchmark_models
 ├── data/gold/pos_gold_set.csv          # 170 elle yazılmış değerlendirme satırı (eğitimde kullanılmaz)
 ├── data/models/                        # model + pos_model_metrics.json + benchmark_results.json

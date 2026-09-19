@@ -34,7 +34,8 @@ def test_dataset_is_deterministic_and_does_not_touch_global_rng():
 def test_dataset_has_other_class_and_group_key(dataset):
     assert OTHER_CATEGORY in set(dataset["category"])
     assert {"group", "source"} <= set(dataset.columns)
-    assert dataset["category"].nunique() == 12
+    from src.nlp.dataset_generator import MERCHANT_DOMAINS
+    assert dataset["category"].nunique() == len(MERCHANT_DOMAINS) + 1  # + "Diğer / Belirsiz"
 
 
 def test_grouped_split_has_no_merchant_leakage(dataset):
@@ -58,6 +59,10 @@ def test_training_reports_leaky_and_leakfree_metrics_separately(dataset):
 # ------------------------------------------------------------------------ çıkarım
 @pytest.mark.parametrize("raw,expected", [
     ("MİGROS LEVENT İSTANBUL", "Market / Bakkal"),
+    # Ödeme kuruluşu öneki ve taksit eki markayı bastırmamalı (gerçek ekstrede yakalanan hata):
+    ("MokaUnited/BERSHKA G 1. Taksit", "Giyim / Aksesuar"),
+    ("IYZICO/ZARA TR 3342", "Giyim / Aksesuar"),
+    ("BOOKING.COM AMSTERDAM", "Seyahat / Konaklama"),
     ("STARBUCKS KAHVE KADIKÖY", "Restoran / Yeme-İçme"),
     ("SHELL AKARYAKIT TR", "Akaryakıt / Ulaşım"),
     ("NETFLIX SUBSCRIPTION", "Dijital Servis / Abonelik"),
@@ -104,6 +109,8 @@ def test_gold_set_regression_floor(classifier):
     assert gold["macro_f1"] >= 0.75
     assert gold["confident_wrong_rate"] <= 0.10
     assert gold["by_difficulty"]["easy"]["accuracy"] >= 0.85
+    # Gerçek ekstreden alınan satırlar (ödeme kuruluşu öneki + kırpma + taksit eki) tam doğru olmalı
+    assert gold["by_difficulty"]["field"]["accuracy"] == 1.0
 
 
 # --------------------------------------------------------------------------- SHAP

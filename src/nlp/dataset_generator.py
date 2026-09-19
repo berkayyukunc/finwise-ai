@@ -54,10 +54,25 @@ MERCHANT_DOMAINS: Dict[str, List[str]] = {
         "IZMIRIM KART", "MARTI", "BINBIN", "TAV HAVALIMANLARI", "ISPARK", "KAMIL KOC", "METRO TURIZM",
     ],
     "Giyim / Aksesuar": [
-        "ZARA", "MANGO", "H&M", "BERSHKA", "PULL&BEAR", "MASSIMO DUTTI",
-        "BOYNER", "BEYMEN", "VAKKO", "LC WAIKIKI", "DEFACTO", "KOTON",
-        "MAVI JEANS", "COLINS", "SARAR", "KIP", "ALTINYILDIZ", "DERIMOD",
-        "DESA", "FLO", "INCI DERI", "SKECHERS", "NIKE", "ADIDAS", "PENTI", "IPEKYOL",
+        # Inditex ve global hızlı moda
+        "ZARA", "ZARA HOME", "BERSHKA", "PULL AND BEAR", "PULL BEAR", "STRADIVARIUS", "OYSHO", "MASSIMO DUTTI",
+        "LEFTIES", "MANGO", "H&M", "UNIQLO", "GAP", "BENETTON", "MARKS AND SPENCER",
+        # Yerli zincirler
+        "LC WAIKIKI", "DEFACTO", "KOTON", "MAVI JEANS", "COLINS", "LTB", "LOFT", "MUDO", "NETWORK",
+        "IPEKYOL", "MACHKA", "TWIST", "ADL", "ROMAN", "SETRMS", "ARMINE", "TUGBA", "KAYRA",
+        "SARAR", "KIGILI", "DAMAT", "SUVARI", "HATEMOGLU", "ALTINYILDIZ", "KIP", "CROSS JEANS",
+        "BOYNER", "BEYMEN", "VAKKO", "YKM", "POLO GARAGE", "WUNDER", "WUNDER MAGAZACILIK",
+        # Ayakkabı ve deri
+        "FLO", "DERIMOD", "DESA", "INCI DERI", "HOTIC", "DIVARESE", "GREYDER", "KEMAL TANCA",
+        "NINE WEST", "CLARKS", "ECCO", "SKECHERS", "TIMBERLAND", "SUPERSTEP",
+        # Spor giyim
+        "NIKE", "ADIDAS", "PUMA", "REEBOK", "NEW BALANCE", "UNDER ARMOUR", "DECATHLON", "INTERSPORT",
+        "COLUMBIA", "THE NORTH FACE", "JACK WOLFSKIN", "SPORTS DIRECT",
+        # İç giyim, aksesuar, kuyumcu
+        "PENTI", "SUWEN", "DAGI", "BLACKSPADE", "ATASAY", "ALTINBAS", "ZEN PIRLANTA", "SWAROVSKI",
+        # Global premium
+        "TOMMY HILFIGER", "CALVIN KLEIN", "GUESS", "LACOSTE", "US POLO ASSN", "LEVIS", "LEE", "WRANGLER",
+        "PIERRE CARDIN", "CACHAREL",
     ],
     "Elektronik / Teknoloji": [
         "MEDIAMARKT", "TEKNOSA", "VATAN BILGISAYAR", "APPLE STORE", "SAMSUNG",
@@ -93,8 +108,14 @@ MERCHANT_DOMAINS: Dict[str, List[str]] = {
         "NAKIT AVANS FAIZI", "HESAP ISLETIM UCRETI", "MTV ODEMESI", "SGK PRIM ODEMESI",
     ],
     "E-Ticaret / Pazaryeri": [
-        "TRENDYOL", "HEPSIBURADA", "AMAZON", "N11", "CICEKSEPETI", "TEMU",
-        "ALIEXPRESS", "PAZARAMA", "PTTAVM", "SAHIBINDEN", "DOLAP", "LETGO", "MORHIPO",
+        "TRENDYOL", "HEPSIBURADA", "AMAZON", "N11", "CICEKSEPETI", "TEMU", "SHEIN", "MODANISA",
+        "ALIEXPRESS", "PAZARAMA", "PTTAVM", "SAHIBINDEN", "DOLAP", "LETGO", "MORHIPO", "EBAY", "ETSY",
+    ],
+    "Seyahat / Konaklama": [
+        "BOOKING.COM", "HOTEL AT BOOKING.COM", "AIRBNB", "EXPEDIA", "HOTELS.COM", "TRIVAGO", "AGODA",
+        "ETSTUR", "TATILSEPETI", "TATILBUDUR", "JOLLY TUR", "SETUR", "ANEX TOUR", "COOLSTAY",
+        "ENUYGUN", "TATIL.COM", "HILTON", "MARRIOTT", "RADISSON BLU", "DEDEMAN", "DIVAN OTEL",
+        "WYNDHAM", "RAMADA", "HOLIDAY INN", "IBIS OTEL", "NOVOTEL", "SWISSOTEL", "RIXOS", "HILTONGARDEN",
     ],
 }
 
@@ -103,7 +124,8 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
     "Market / Bakkal": ["MARKET", "SUPERMARKET", "GIDA", "BAKKAL", "SARKUTERI", "MANAV", "KASAP", "KURUYEMIS", "TEKEL"],
     "Restoran / Yeme-İçme": ["RESTORAN", "LOKANTA", "KAFE", "CAFE", "KAHVE", "PASTANE", "FIRIN", "DONER", "PIZZA", "KEBAP", "BURGER", "BUFE", "BALIK"],
     "Akaryakıt / Ulaşım": ["PETROL", "AKARYAKIT", "OTOGAZ", "TAKSI", "OTOPARK", "TURIZM SEYAHAT", "HAVAYOLLARI", "OTOYOL", "RENT A CAR"],
-    "Giyim / Aksesuar": ["GIYIM", "TEKSTIL", "BUTIK", "AYAKKABI", "MODA", "OUTLET", "KONFEKSIYON", "CANTA", "KUYUMCU"],
+    "Giyim / Aksesuar": ["GIYIM", "TEKSTIL", "BUTIK", "AYAKKABI", "MODA", "OUTLET", "KONFEKSIYON", "CANTA", "KUYUMCU",
+                          "JEANS", "DENIM", "TRIKO", "CORAP", "IC GIYIM", "SPOR GIYIM", "DERI", "KURK"],
     "Elektronik / Teknoloji": ["ELEKTRONIK", "BILGISAYAR", "TEKNOLOJI", "BILISIM", "TELEFON AKSESUAR", "GSM"],
     "Dijital Servis / Abonelik": ["SUBSCRIPTION", "ABONELIK", "PREMIUM UYELIK", "DIGITAL", "STREAMING"],
     "Sağlık / Kozmetik": ["ECZANE", "ECZANESI", "HASTANE", "HASTANESI", "KLINIK", "DIS POLIKLINIGI", "OPTIK", "KOZMETIK", "KUAFOR", "BERBER", "GUZELLIK SALONU", "MEDIKAL"],
@@ -111,6 +133,8 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
     "Eğlence / Hobi / Kitap": ["KITABEVI", "KIRTASIYE", "SINEMA", "TIYATRO", "OYUNCAK", "SPOR SALONU", "HOBI", "MUZIK", "ETKINLIK BILET"],
     "Finans / Vergi / Masraf": ["FAIZ", "VERGI", "KOMISYON", "MASRAF", "UCRETI", "SIGORTA PRIMI"],
     "E-Ticaret / Pazaryeri": ["PAZARYERI", "E-TICARET", "ONLINE ALISVERIS"],
+    "Seyahat / Konaklama": ["OTEL", "HOTEL", "RESORT", "TATIL KOYU", "PANSIYON", "APART OTEL", "HOSTEL",
+                             "TERMAL OTEL", "KONAKLAMA", "SEYAHAT ACENTESI", "TUR OPERATORU", "BUTIK OTEL"],
 }
 
 # Kategori sinyali OLMAYAN iş kolları ve işlem türleri -> "Diğer / Belirsiz"
@@ -124,12 +148,16 @@ TRANSFER_PREFIXES = ["HAVALE", "EFT", "FAST", "PARA TRANSFERI", "GIDEN HAVALE", 
 FIRST_NAMES = ["AHMET", "MEHMET", "AYSE", "FATMA", "MUSTAFA", "EMRE", "ZEYNEP", "ELIF", "CAN", "DENIZ", "HASAN", "HUSEYIN", "MERVE", "BURAK", "SELIN", "OGUZ", "TOLGA", "EBRU", "KEREM", "GIZEM"]
 SURNAMES = ["YILMAZ", "KAYA", "DEMIR", "CELIK", "SAHIN", "OZKAN", "ARSLAN", "DOGAN", "KILIC", "ASLAN", "CETIN", "KARA", "KOC", "KURT", "OZDEMIR", "AYDIN", "OZTURK", "POLAT", "ERDOGAN", "GUNES", "AKSOY", "TEKIN", "BULUT", "YAVUZ", "UYSAL", "TUNC", "ERGIN", "SEZER", "BAYRAK", "ALTUN"]
 
-POS_PREFIXES = ["", "", "", "", "IYZICO/", "PAYTR*", "BD*", "SBM*", "PARAM*", "PARAM/", "SIPAY*"]
+# Ödeme kuruluşu önekleri gerçek ekstrelerde sıktır ve POS alanını doldurup markayı kırptırır.
+POS_PREFIXES = ["", "", "", "IYZICO/", "PAYTR*", "BD*", "SBM*", "PARAM*", "PARAM/", "SIPAY*",
+                "MokaUnited/", "MokaUnited/", "VALLET/", "CRAFTGATE*", "PAYCELL*", "PARATIKA/"]
+# Taksitli işlemlerde açıklamanın sonuna eklenen ek; kategori sinyali taşımaz ama alanı doldurur.
+INSTALLMENT_SUFFIXES = ["{n}. Taksit", "{n}.Tak", "({n}/{t} Taksit)", "{n}/{t} TAKSIT"]
 CITY_SUFFIXES = ["IST", "ISTANBUL", "ANKARA", "IZMIR", "BURSA", "ANTALYA", "KADIKOY", "SISLI", "BESIKTAS", "TR", "AVM", "ISTINYE PARK", "ZORLU", "KANYON", "CEVAHIR", "AKASYA", "ADANA", "ESKISEHIR", "ATASEHIR", "MASLAK"]
 LEGAL_SUFFIXES = ["TIC A.S.", "TIC. LTD. STI.", "A.S.", "LTD", "MAGAZACILIK", "PERAKENDE", "PAZARLAMA", "SUBESI", "SAN. VE TIC."]
 
 _VOWELS = set("AEIOU")
-POS_FIELD_LIMIT = 25  # Birçok POS / ekstre satırı işyeri adını ~22-25 karaktere kırpar
+POS_FIELD_LIMITS = (19, 22, 25, 30)  # gerçek ekstrelerde görülen alan genişlikleri
 
 
 def _abbreviate(word: str, rng: random.Random) -> str:
@@ -178,8 +206,13 @@ def _decorate(core: str, rng: random.Random, noise_level: float = 1.0) -> str:
         rng.shuffle(parts)
     out = " ".join(parts)
 
-    if rng.random() < 0.25 * noise_level:
-        out = out[:POS_FIELD_LIMIT].rstrip()
+    # Kırpma önekten SONRA uygulanır: "MokaUnited/PULL AND BEAR" -> "MokaUnited/PULL AND"
+    if rng.random() < 0.35 * noise_level:
+        out = out[:rng.choice(POS_FIELD_LIMITS)].rstrip()
+    # Taksit eki kırpmadan sonra gelir (bankalar bunu ayrı sütundan ekler)
+    if rng.random() < 0.18:
+        n = rng.randint(1, 9)
+        out = f"{out} {rng.choice(INSTALLMENT_SUFFIXES).format(n=n, t=rng.randint(n, 12))}"
     return out
 
 
@@ -216,7 +249,7 @@ def _other_sample(rng: random.Random) -> Dict[str, str]:
     return {"raw_text": raw, "category": OTHER_CATEGORY, "group": group, "source": "other"}
 
 
-def generate_pos_dataset(num_samples: int = 18000, random_seed: int = 42) -> pd.DataFrame:
+def generate_pos_dataset(num_samples: int = 30000, random_seed: int = 42) -> pd.DataFrame:
     """
     Sentetik POS eğitim verisi üretir.
 

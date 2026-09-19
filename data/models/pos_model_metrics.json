@@ -1,61 +1,65 @@
 {
-  "trained_at": "2026-09-19T00:14:19+00:00",
+  "trained_at": "2026-09-19T20:53:25+00:00",
   "python": "3.12.13",
   "sklearn": "1.9.1",
   "lightgbm": "4.7.0",
   "abstain_threshold": 0.55,
   "metrics": {
     "seen_merchant": {
-      "accuracy": 0.9770916334661355,
-      "macro_f1": 0.9781070691832238,
-      "n": 3012
+      "accuracy": 0.9640718562874252,
+      "macro_f1": 0.9652843769864309,
+      "n": 4843
     },
-    "duplicates_removed": 2941,
-    "train_samples": 15059,
-    "num_features": 16348,
-    "train_time_sec": 56.766628459095955,
+    "duplicates_removed": 5758,
+    "train_samples": 24211,
+    "num_features": 20000,
+    "train_time_sec": 113.94212145777419,
     "unseen_merchant": {
-      "accuracy": 0.7075498987561469,
-      "macro_f1": 0.7202648623997078,
-      "n": 3457,
+      "accuracy": 0.7436384352449678,
+      "macro_f1": 0.7624881894275961,
+      "n": 5266,
       "by_source": {
         "brand": {
-          "accuracy": 0.4955798231929277,
-          "macro_f1": 0.5061288428983519,
-          "n": 1923
+          "accuracy": 0.5549410029498525,
+          "macro_f1": 0.5449301947315128,
+          "n": 2712
         },
         "generic": {
-          "accuracy": 0.978689818468824,
-          "macro_f1": 0.9027993151705614,
-          "n": 1267
+          "accuracy": 0.9491525423728814,
+          "macro_f1": 0.8850543423746839,
+          "n": 2124
         },
         "other": {
-          "accuracy": 0.947565543071161,
-          "macro_f1": 0.13901098901098902,
-          "n": 267
+          "accuracy": 0.9186046511627907,
+          "macro_f1": 0.08705234159779614,
+          "n": 430
         }
       }
     },
     "gold": {
-      "n": 170,
-      "accuracy": 0.8235294117647058,
-      "macro_f1": 0.8284773517270542,
-      "coverage": 0.8529411764705882,
-      "selective_accuracy": 0.8896551724137931,
-      "confident_wrong_rate": 0.047058823529411764,
-      "ece": 0.10343981214328349,
+      "n": 195,
+      "accuracy": 0.8307692307692308,
+      "macro_f1": 0.8371642089096778,
+      "coverage": 0.8717948717948718,
+      "selective_accuracy": 0.8941176470588236,
+      "confident_wrong_rate": 0.020512820512820513,
+      "ece": 0.06682517973682096,
       "by_difficulty": {
         "easy": {
-          "n": 98,
-          "accuracy": 0.9183673469387755
+          "n": 105,
+          "accuracy": 0.8952380952380953
         },
         "medium": {
-          "n": 55,
-          "accuracy": 0.8
+          "n": 59,
+          "accuracy": 0.864406779661017
         },
         "hard": {
-          "n": 17,
-          "accuracy": 0.35294117647058826
+          "n": 21,
+          "accuracy": 0.3333333333333333
+        },
+        "field": {
+          "n": 10,
+          "accuracy": 1.0
         }
       }
     }
