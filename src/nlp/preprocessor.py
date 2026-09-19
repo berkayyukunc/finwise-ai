@@ -56,6 +56,8 @@ class TurkishFinancialNLPPreprocessor:
         r"ltd\.?",
         r"limited",
         r"sti\.?",
+        r"inc\.?", r"corp\.?", r"co\.?", r"plc", r"gmbh", r"sarl", r"b\.?v\.?", r"n\.?v\.?",
+        r"s\.?a\.?", r"ab", r"oy", r"aps", r"llc", r"international",
         r"san\.",
         r"sanayi",
         r"subesi",
@@ -66,6 +68,13 @@ class TurkishFinancialNLPPreprocessor:
         r"ankara",
         r"izmir",
         r"merkez",
+        # Yabancı işyeri satırlarında şehir/ülke adı geçer ("TOOLIGO LIMITED/LONDON"). Şehir adı
+        # kategori sinyali taşımaz; bırakılırsa modelin hiç görmediği token rastgele bir sınıfa
+        # yaklaşır (ölçüldü: "TOOLIGO" tek başına doğru şekilde Belirsiz, "+LONDON" ile Restoran).
+        r"london", r"amsterdam", r"dublin", r"berlin", r"paris", r"madrid", r"roma", r"milano",
+        r"vienna", r"stockholm", r"helsinki", r"copenhagen", r"luxembourg", r"zurich", r"geneva",
+        r"dubai", r"singapore", r"hong kong", r"tokyo", r"seoul", r"sydney", r"toronto",
+        r"new york", r"newyork", r"san francisco", r"seattle", r"california", r"delaware",
         r"pos",
         r"online",
         r"etic",

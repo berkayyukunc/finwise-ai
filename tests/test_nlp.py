@@ -63,6 +63,7 @@ def test_training_reports_leaky_and_leakfree_metrics_separately(dataset):
     ("MokaUnited/BERSHKA G 1. Taksit", "Giyim / Aksesuar"),
     ("IYZICO/ZARA TR 3342", "Giyim / Aksesuar"),
     ("BOOKING.COM AMSTERDAM", "Seyahat / Konaklama"),
+    ("NETFLIX INTERNATIONAL B.V.", "Dijital Servis / Abonelik"),   # yabancı tüzel ek markayı bozmamalı
     ("STARBUCKS KAHVE KADIKÖY", "Restoran / Yeme-İçme"),
     ("SHELL AKARYAKIT TR", "Akaryakıt / Ulaşım"),
     ("NETFLIX SUBSCRIPTION", "Dijital Servis / Abonelik"),
@@ -79,7 +80,9 @@ def test_diacritic_variants_get_identical_predictions(classifier):
     assert a == b
 
 
-@pytest.mark.parametrize("raw", ["", "   ", "...", "AHMET YILMAZ HAVALE", "XQZW 12345", "OZKAN INSAAT TAAHHUT"])
+@pytest.mark.parametrize("raw", ["", "   ", "...", "AHMET YILMAZ HAVALE", "XQZW 12345", "OZKAN INSAAT TAAHHUT",
+                                 # Tanınmayan çekirdek + yabancı ek/şehir: şehir kategori sinyali DEĞİLDİR
+                                 "TOOLIGO LIMITED/LONDON", "QWERTY GMBH/BERLIN", "VELTRAN LIMITED/LONDON"])
 def test_out_of_domain_inputs_abstain_instead_of_guessing(classifier, raw):
     (category, _), = classifier.predict(raw)
     assert category == OTHER_CATEGORY

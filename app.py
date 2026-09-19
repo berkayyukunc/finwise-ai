@@ -10,7 +10,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.clustering.archetypes import SpendingArchetypeClusterer
 from src.ui import theme
 from src.utils.statement_loader import load_classifier, process_statements
 
@@ -26,11 +25,11 @@ theme.inject_css(st)
 
 @st.cache_resource
 def load_ml_pipeline():
-    """NLP sınıflandırıcı ve kümeleme modellerini önbelleğe alır."""
-    return load_classifier(), SpendingArchetypeClusterer()
+    """POS sınıflandırıcısını önbelleğe alır (model dosyası yoksa None döner)."""
+    return load_classifier()
 
 
-nlp_pipeline, clusterer = load_ml_pipeline()
+nlp_pipeline = load_ml_pipeline()
 
 # Yan Menü (Sidebar)
 with st.sidebar:
@@ -82,7 +81,7 @@ with st.sidebar:
 # Ana İçerik
 st.markdown("<div class='main-header'>FinWise-AI</div>", unsafe_allow_html=True)
 st.markdown("<div class='tagline'>Finansal Belge Zekası &amp; Tahminleme Motoru</div>", unsafe_allow_html=True)
-st.caption("Document AI + POS sınıflandırma + bileşen tabanlı tahmin + XAI (SHAP) + kümeleme · tüm örnek ekstreler sentetiktir")
+st.caption("Document AI + POS sınıflandırma + bileşen tabanlı tahmin + anomali + XAI (SHAP) · tüm örnek ekstreler sentetiktir")
 
 # Veri Yükleme ve İşleme
 pdf_files = []
@@ -221,4 +220,4 @@ with tab2:
         st.info("Anomali taraması tamamlandı.")
 
 
-st.info("💡 **İpucu:** Sol menüden **XAI & NLP Arena**, **Harcama Galaksisi**, **Tahmin & Anomali** ve **FinWise Copilot** sayfalarına geçerek derinlemesine yapay zeka analizlerini inceleyebilirsiniz.")
+st.info("💡 **İpucu:** Sol menüden **XAI & NLP Arena**, **Tahmin & Anomali**, **Yatırım & DCA** ve **FinWise Copilot** sayfalarına geçebilirsiniz.")

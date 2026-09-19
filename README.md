@@ -11,7 +11,7 @@ license: mit
 
 # 🧠 FinWise-AI: Kredi Kartı Ekstreleri İçin Uygulamalı Yapay Zeka
 
-> PDF ekstre → güvenlik denetimi → ayrıştırma + **kuruşu kuruşuna sağlama** → PII karartma → POS sınıflandırma (+SHAP) → bileşen tabanlı tahmin → anomali → kümeleme → deterministik soru-cevap.
+> PDF ekstre → güvenlik denetimi → ayrıştırma + **kuruşu kuruşuna sağlama** → PII karartma → POS sınıflandırma (+SHAP) → bileşen tabanlı tahmin → anomali → deterministik soru-cevap.
 > Tamamı CPU'da, sıfır API maliyetiyle, **sentetik veriyle** ve ölçülmüş rakamlarla.
 
 [![CI](https://github.com/berkayyukunc/finwise-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/berkayyukunc/finwise-ai/actions/workflows/ci.yml)
@@ -28,19 +28,18 @@ Aşağıdaki her sayı `make train`, `make benchmark` ya da `make test` ile yeni
 
 | Alan | Ölçüm | Sonuç |
 | :-- | :-- | :-- |
-| **POS sınıflandırma** | Altın set (195 satır, eğitimde yok) macro-F1 | **0,837** |
-| | Görülmemiş işyeri (GroupShuffleSplit) macro-F1 | 0,762 → esnaf+anahtar kelime **0,949**, anahtar kelimesiz yeni marka 0,555 (beklenen sınır) |
-| | **Gerçek ekstre satırları** (ilk sürümün tamamını yanlış bildiği 10 satır) | **10/10 doğru** |
-| | Görülmüş marka macro-F1 (iyimser üst sınır) | 0,965 |
-| | Emin-ama-yanlış oranı (güven ≥ 0,90) | %2,1 |
+| **POS sınıflandırma** | Altın set (199 satır, eğitimde yok) macro-F1 | **0,875** |
+| | Görülmemiş işyeri (GroupShuffleSplit) macro-F1 | 0,690 → esnaf+anahtar kelime **0,938**, anahtar kelimesiz yeni marka 0,522 (beklenen sınır) |
+| | **Gerçek ekstre satırları** (ilk sürümün yanlış bildiği 11 satır) | **11/11 doğru** |
+| | Görülmüş marka macro-F1 (iyimser üst sınır) | 0,959 |
+| | Emin-ama-yanlış oranı (güven ≥ 0,90) | %2,5 · kalibrasyon (ECE) 0,038 |
 | | Gecikme / boyut | 0,79 ms tekil · 0,06 ms/satır batch · 2,2 MB |
 | **Document AI** | 8 farklı yerleşim: işlem sayısı, dönem borcu, asgari, son 4 hane, tarihler | 8/8 birebir; sağlama farkı 0,00 TL |
 | | PII sızıntısı (ad, TC, adres, 3. kişi adı, metadata; tüm sayfalar) | 0 |
 | | **Gerçek ekstrelerde saha doğrulaması** (yazarın kendi ekstreleri; repoda yer almaz) | 5 Vakıfbank PDF'i uçtan uca: 5/5 sağlama tuttu (fark 0,00 TL). 4 Ziraat ekstresi ekran görüntüsünden aktarılan satırlarla: 4/4 (PDF metin çıkarımı sınanmadı) |
 | **Tahmin** | Aylık %95 aralığın ampirik kapsaması (100 simülasyon) | **%92** |
 | **Anomali** | Anomalisiz sentetik ekstrelerde yanlış alarm | **%0,5** (ekstrelerin %76'sında hiç alarm yok) |
-| **Kümeleme** | Centroid→arketip eşleme doğruluğu | 6/6 (4 farklı tohumda) · saflık > %95 |
-| **Kalite** | Test / kapsama / lint | 282 test · %95 satır+dal kapsaması · ruff temiz |
+| **Kalite** | Test / kapsama / lint | 272 test · %95 satır+dal kapsaması · ruff temiz |
 
 > **İlk sürümle fark:** İlk sürüm "%99,9 F1" bildiriyordu; bu, sentetik veride rastgele ayrımın yol açtığı şablon sızıntısıydı (test satırlarının %35,5'i eğitimde vardı; markalar ayrılınca F1 0,205'e düşüyordu). Hikâyenin tamamı: [`PROJE_AMACI_VE_DEGERLENDIRME.md`](PROJE_AMACI_VE_DEGERLENDIRME.md).
 
@@ -62,7 +61,6 @@ flowchart TD
     NLP --> SHAP["SHAP (toplanabilir, çift sayımsız)"]
     DF --> FC["📈 Tahmin = taksitler + abonelikler<br/>+ walk-forward ile seçilen model<br/>blok bootstrap aralığı"]
     DF --> AN["🚨 Medyan/MAD + mükerrer çekim<br/>+ destekleyici Isolation Forest"]
-    NLP --> KM["🪐 K-Means + Macar eşlemesi + PCA"]
     NLP --> CP["🤖 Copilot: niyet yönlendirici<br/>→ Pandas araçları → şablon"]
 ```
 
@@ -78,7 +76,6 @@ flowchart TD
 | Açıklayıcı | `src/nlp/explainer.py` | Toplanabilirlik ve n-gram→kelime dağıtımı testle kanıtlı |
 | Tahmin | `src/predictive/forecasting.py` | Deterministik yükümlülükler ayrı; model seçimi gerçek adaylar üzerinde; yetersiz veride sayı uydurmaz |
 | Anomali | `src/predictive/anomaly.py` | `contamination` yok: temiz ekstrede alarm üretmez |
-| Kümeleme | `src/clustering/archetypes.py` | Küme kimliği keyfidir → centroid'ler prototiplere Macar algoritmasıyla eşlenir |
 | Copilot | `src/copilot/agent.py` | LLM/RAG **değildir**; yanıttaki her tutar araç çıktısından gelir (testli); bilmediğini söyler |
 
 ---
@@ -89,7 +86,7 @@ flowchart TD
 python3 -m venv venv && source venv/bin/activate
 make install        # kilitli bağımlılıklar + geliştirme araçları
 make train          # sentetik veri → sızıntısız değerlendirme → model + metrik JSON
-make check          # ruff + 282 test + %85 kapsama kapısı
+make check          # ruff + 272 test + %85 kapsama kapısı
 make run            # http://localhost:8501
 ```
 
@@ -116,8 +113,7 @@ eşikler 8 ve 15). Uygulanan kurallar:
 - Büyüklük zaten çubuk uzunluğundaysa renkle tekrar kodlanmaz (günlük harcama tek renktir).
 - SHAP'te yeşil/kırmızı yerine **ıraksak kırmızı ↔ mavi**: yeşil-kırmızı ikilisi en yaygın renk körlüğü
   türünde ayırt edilemez. Renk tek başına anlam taşımaz; her kutucuk SHAP değerini ipucunda gösterir.
-- 3B galakside 6 kümeyi renkle ayırmak ölçülen eşiği geçemediği için popülasyon nötr çizilir ve
-  yalnızca kullanıcının kümesi vurgulanır.
+- Saçılım grafikleri tüm renk çiftlerini karşılaştırdığı için en fazla 3 kategorik renk taşıyabilir.
 
 ## Ekstreniz ayrıştırılamazsa
 
@@ -140,7 +136,6 @@ Gerçek ekstrenizi **yalnızca yerelde** işleyin. Herkese açık bir bulut kuru
 - Altın set yazarın elle yazdığı satırlardan oluşur; bağımsız bir etiketleyiciyle doğrulanmamıştır.
 - OCR yoktur: taranmış PDF'ler açık bir hata mesajıyla reddedilir.
 - Etiketsiz serbest metindeki kişi adları için NER gerekir.
-- Arketip popülasyonu sentetiktir; kümeleme bir yöntem gösterimidir, segmentasyon bulgusu değildir.
 - Getiri simülatörü deterministik senaryodur; yatırım tavsiyesi değildir.
 
 ## Dokümanlar

@@ -4,43 +4,43 @@
   "results": [
     {
       "model": "Çoğunluk sınıfı (taban)",
-      "unseen_merchant_macro_f1": 0.011614088159031978,
-      "gold_macro_f1": 0.008918617614269788,
-      "gold_accuracy": 0.06153846153846154,
-      "fit_sec": 0.05206820787861943,
-      "pickle_mb": 0.147487,
-      "single_ms_median": 0.1771042589098215,
-      "batch_ms_per_row": 0.002067625056952238
+      "unseen_merchant_macro_f1": 0.00511727078891258,
+      "gold_macro_f1": 0.015315001740341106,
+      "gold_accuracy": 0.11055276381909548,
+      "fit_sec": 0.04509600019082427,
+      "pickle_mb": 0.153405,
+      "single_ms_median": 0.13664597645401955,
+      "batch_ms_per_row": 0.0012690830044448376
     },
     {
       "model": "Word TF-IDF + Naive Bayes",
-      "unseen_merchant_macro_f1": 0.6248345439289962,
-      "gold_macro_f1": 0.8261742665157542,
-      "gold_accuracy": 0.8205128205128205,
-      "fit_sec": 0.0807546665892005,
-      "pickle_mb": 1.604286,
-      "single_ms_median": 0.31281192786991596,
-      "batch_ms_per_row": 0.001905292272567749
+      "unseen_merchant_macro_f1": 0.5497937737518531,
+      "gold_macro_f1": 0.8243163632258541,
+      "gold_accuracy": 0.8190954773869347,
+      "fit_sec": 0.06959562515839934,
+      "pickle_mb": 1.67094,
+      "single_ms_median": 0.23870845325291157,
+      "batch_ms_per_row": 0.0014009997248649597
     },
     {
       "model": "Char-wb TF-IDF + Logistic Regression",
-      "unseen_merchant_macro_f1": 0.7528624513534493,
-      "gold_macro_f1": 0.8397494619447787,
-      "gold_accuracy": 0.8358974358974359,
-      "fit_sec": 4.113162708003074,
-      "pickle_mb": 2.745158,
-      "single_ms_median": 0.2806244883686304,
-      "batch_ms_per_row": 0.019007249735295773
+      "unseen_merchant_macro_f1": 0.6763775154752112,
+      "gold_macro_f1": 0.8430254687287936,
+      "gold_accuracy": 0.8442211055276382,
+      "fit_sec": 2.7705535828135908,
+      "pickle_mb": 2.762283,
+      "single_ms_median": 0.23808353580534458,
+      "batch_ms_per_row": 0.015028625261038542
     },
     {
       "model": "Char-wb TF-IDF + LightGBM (üretim)",
-      "unseen_merchant_macro_f1": 0.7624881894275961,
-      "gold_macro_f1": 0.8019352601182385,
-      "gold_accuracy": 0.8,
-      "fit_sec": 34.05584941711277,
-      "pickle_mb": 5.956007,
-      "single_ms_median": 0.7876046001911163,
-      "batch_ms_per_row": 0.056395458057522774
+      "unseen_merchant_macro_f1": 0.690008257363388,
+      "gold_macro_f1": 0.8447894162472168,
+      "gold_accuracy": 0.8391959798994975,
+      "fit_sec": 36.91677570808679,
+      "pickle_mb": 5.975569,
+      "single_ms_median": 0.7762913592159748,
+      "batch_ms_per_row": 0.05228683399036527
     }
   ]
 }

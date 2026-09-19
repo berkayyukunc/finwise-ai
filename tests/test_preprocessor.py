@@ -53,6 +53,10 @@ def test_noise_regex_never_eats_brand_prefixes(raw, expected):
     ("23/05 S/BEYMEN 01.Tak ISTANBUL", "<num> beymen"),
     ("STRADIVARIUS IZMIR I", "stradivarius"),          # kırpmadan kalan tek harf artığı atılır
     ("MIGROS TIC A.S. IST TR", "migros"),
+    # Yabancı tüzel kişilik ekleri ve şehir adları da unvan çöpüdür; çekirdek marka kalır
+    ("TOOLIGO LIMITED/LONDON", "tooligo"),
+    ("NETFLIX INTERNATIONAL B.V.", "netflix"),
+    ("QWERTY GMBH/BERLIN", "qwerty"),
     ("AKBANK T.A.S.", "akbank"),
     ("DEMIR SAN. VE TIC. LTD. STI.", "demir ve"),
     ("IYZICO/ZARA TR", "zara"),

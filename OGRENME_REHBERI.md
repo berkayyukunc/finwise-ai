@@ -63,11 +63,20 @@ Bu anlatım üç şey gösterir: uçtan uca sistem kurabildiğini, **kendi sonuc
 **Soru:** *"Anomali tespitinde neden yalnızca Isolation Forest değil?"*
 **Cevap:** *"İlk sürümde `contamination=0.08` vardı; bu 'her ekstrenin %8'i anomalidir' demek. Tamamen normal veri ürettim, yine 5 işlem işaretledi — 129 TL'lik alışverişe 'örüntü dışı' dedi. İkinci sorun maskeleme: ortalama ve standart sapmayı aykırı değerin kendisi şişirir; 6 işlemde 25.000 TL'nin klasik z-skoru en fazla 2,04 olabilir, hiçbir eşiği geçemez. Medyan/MAD'a geçtim, log tutarda, yalnızca yüksek yön. Üstüne alan kuralı: aynı şubeden 3 gün içinde aynı tutar = olası mükerrer çekim. Isolation Forest hâlâ var ama destekleyici: n ≥ 30 ise çalışır, tek başına işaretleyemez. Temiz ekstrelerde yanlış alarm %0,5'e indi."*
 
-### FAZ 4 — Kümeleme
+### FAZ 4 — Kaldırılan modül (bunu da anlatabilirsin)
+
+**Soru:** *"Projeden bir şey çıkardın mı?"*
+**Cevap:** *"Evet, K-Means + PCA ile çizilen 3B 'harcama galaksisi' sayfasını sildim. İki nedenle: popülasyon
+sentetikti — kümeleri ben 6 prototip etrafında üretip K-Means'e 'buldurmuştum', yani doğrulama döngüseldi; ve
+kullanıcıya hiçbir eyleme dönüşmeyen bir görselden ibaretti. Silmeden önce içindeki gerçek hatayı bulup
+düzeltmiştim, ama doğru olmak ile faydalı olmak aynı şey değil. Bir portföyde, kendi dokümanı 'bu gerçek bir
+bulgu değil' diyen bir modülü taşımak zarardır."*
+
+**Silmeden önce bulduğum hata (kavram olarak hâlâ anlatmaya değer):**
 
 **Soru:** *"K-Means çıktısını nasıl etiketledin?"*
 **Cevap:** *"İlk sürümde `ISIMLER[kume_id]` yazmıştım. K-Means'in küme numaraları keyfidir; 6 prototip profil verip kontrol ettiğimde altısının da yanlış etiketlendiğini gördüm — kahve profili 'Taksit Mimarı' çıkıyordu. Testim yalnızca `'cluster_id' in sonuç` diye baktığı için yakalayamamıştı. Şimdi küme merkezlerini prototip vektörleriyle ölçeklenmiş uzayda karşılaştırıp Macar algoritmasıyla bire bir eşliyorum; 4 farklı tohumda 6/6."*
-**Eklemen gereken dürüst not:** *"Popülasyon sentetik — 6 prototip etrafında ürettim, K-Means'in onları bulması döngüsel. Bunu gerçek bir segmentasyon bulgusu olarak sunmuyorum; hattın doğru kurulduğunun gösterimi. Gerçek veriyle k'yi silhouette ile yeniden seçerdim."*
+**Dürüst not:** *"Popülasyon sentetik — 6 prototip etrafında ürettim, K-Means'in onları bulması döngüsel. Bunu gerçek bir segmentasyon bulgusu olarak sunmuyorum; hattın doğru kurulduğunun gösterimi. Gerçek veriyle k'yi silhouette ile yeniden seçerdim."*
 
 ### FAZ 5 — Copilot
 
@@ -95,7 +104,7 @@ Bu proje bu soruya verilebilecek en iyi malzemeyi içerir. Hepsi [`PROJE_AMACI_V
 
 ```bash
 make install && make train   # kilitli bağımlılıklar, sızıntısız eğitim + metrik JSON
-make check                   # ruff + 273 test + kapsama kapısı
+make check                   # ruff + 272 test + kapsama kapısı
 make run                     # arayüz
 ```
 

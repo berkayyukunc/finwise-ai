@@ -154,6 +154,24 @@ POS_PREFIXES = ["", "", "", "IYZICO/", "PAYTR*", "BD*", "SBM*", "PARAM*", "PARAM
 # Taksitli işlemlerde açıklamanın sonuna eklenen ek; kategori sinyali taşımaz ama alanı doldurur.
 INSTALLMENT_SUFFIXES = ["{n}. Taksit", "{n}.Tak", "({n}/{t} Taksit)", "{n}/{t} TAKSIT"]
 CITY_SUFFIXES = ["IST", "ISTANBUL", "ANKARA", "IZMIR", "BURSA", "ANTALYA", "KADIKOY", "SISLI", "BESIKTAS", "TR", "AVM", "ISTINYE PARK", "ZORLU", "KANYON", "CEVAHIR", "AKASYA", "ADANA", "ESKISEHIR", "ATASEHIR", "MASLAK"]
+# Yabancı işyerlerinde görülen tüzel kişilik ekleri ve şehirler. Bunlar TEK BAŞINA kategori
+# belirtmez: "NETFLIX INTERNATIONAL B.V." abonelik, "TOOLIGO LIMITED/LONDON" ise bilinmeyendir.
+# Ayırt edici olan çekirdek marka tokenidir; bu yüzden aynı ekler hem bilinen markalara hem de
+# "other" sahte markalarına takılır ki model eki değil çekirdeği dinlemeyi öğrensin.
+FOREIGN_SUFFIXES = ["LIMITED", "LTD", "INC", "CORP", "PLC", "GMBH", "B.V.", "N.V.", "SARL", "LLC", "AB", "OY", "INTERNATIONAL"]
+FOREIGN_CITIES = ["LONDON", "AMSTERDAM", "DUBLIN", "BERLIN", "PARIS", "LUXEMBOURG", "STOCKHOLM",
+                  "DUBAI", "SINGAPORE", "NEW YORK", "SAN FRANCISCO", "ZURICH", "VIENNA", "TOKYO"]
+
+# Gerçek POS satırları markanın TİCARET UNVANINI taşır: "GETİR PERAKENDE LOJİSTİK",
+# "TURKCELL İLETİŞİM HİZMETLERİ", "BOYNER BÜYÜK MAĞAZACILIK". Bu kelimeler her sektörde geçtiği
+# için kategori bilgisi taşımaz; eğitimde TÜM kategorilere takılır ki model markayı dinlemeyi,
+# unvanı görmezden gelmeyi öğrensin. (Kategori sinyali olan kelimeler bu havuza konmaz.)
+TRADE_NAME_WORDS = [
+    "PERAKENDE", "LOJISTIK", "HIZMETLERI", "MAGAZACILIK", "TICARET", "DAGITIM", "PAZARLAMA",
+    "ISLETMECILIK", "GRUP", "HOLDING", "YATIRIM", "URUNLERI", "SATIS", "BUYUK", "ANONIM SIRKETI",
+    "ILETISIM", "TESISLERI", "ENDUSTRI", "SERVIS", "GLOBAL", "STORE", "SHOP", "CENTER", "FACTORY",
+]
+
 LEGAL_SUFFIXES = ["TIC A.S.", "TIC. LTD. STI.", "A.S.", "LTD", "MAGAZACILIK", "PERAKENDE", "PAZARLAMA", "SUBESI", "SAN. VE TIC."]
 
 _VOWELS = set("AEIOU")
@@ -197,9 +215,14 @@ def _decorate(core: str, rng: random.Random, noise_level: float = 1.0) -> str:
     if rng.random() < 0.06 * noise_level:
         text = text.replace(" ", "")
 
+    # Ticaret unvanı kelimeleri (1-2 tane) markadan hemen sonra gelir
+    if rng.random() < 0.28 * noise_level:
+        text += " " + " ".join(rng.sample(TRADE_NAME_WORDS, rng.randint(1, 2)))
+
     prefix = rng.choice(POS_PREFIXES)
-    legal = rng.choice(LEGAL_SUFFIXES) if rng.random() < 0.35 else ""
-    city = rng.choice(CITY_SUFFIXES) if rng.random() < 0.6 else ""
+    foreign = rng.random() < 0.15          # yurt dışı işyeri satırı
+    legal = rng.choice(FOREIGN_SUFFIXES if foreign else LEGAL_SUFFIXES) if rng.random() < 0.35 else ""
+    city = rng.choice(FOREIGN_CITIES if foreign else CITY_SUFFIXES) if rng.random() < 0.6 else ""
     branch = f"{rng.randint(1, 9999):0{rng.choice([3, 4])}d}" if rng.random() < 0.45 else ""
     parts = [p for p in [prefix + text, legal, city, branch] if p]
     if rng.random() < 0.15:
@@ -242,7 +265,11 @@ def _other_sample(rng: random.Random) -> Dict[str, str]:
         raw, group = _decorate(f"{name} {rng.choice(OTHER_KEYWORDS)}", rng, noise_level=0.5), f"other:{name}"
     elif roll < 0.92:
         name = " ".join(_pseudo_word(rng) for _ in range(rng.randint(1, 2)))
-        raw, group = _decorate(name, rng, noise_level=0.3), f"other:{name}"
+        if rng.random() < 0.45:  # "XPTOR LIMITED/LONDON": tanınmayan çekirdek + yabancı ek -> Belirsiz
+            raw = f"{name} {rng.choice(FOREIGN_SUFFIXES)}/{rng.choice(FOREIGN_CITIES)}"
+        else:
+            raw = _decorate(name, rng, noise_level=0.3)
+        group = f"other:{name}"
     else:
         code = "".join(rng.choices(string.ascii_uppercase + string.digits, k=rng.randint(4, 12)))
         raw, group = code, f"other:{code}"

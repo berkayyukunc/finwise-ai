@@ -16,8 +16,8 @@ Kurallar (grafik kodu yazarken uyulması gerekenler):
 3. Kutupluluk (SHAP +/-) için ıraksak çift: kırmızı ↔ mavi, ortada nötr gri. Yeşil/kırmızı
    ikilisi kullanılmaz: en yaygın renk körlüğü türünde ayırt edilemez.
 4. Durum renkleri (iyi/uyarı/kritik) seriye dönüşmez; her zaman metin etiketiyle birlikte gelir.
-5. Saçılım (3B galaksi) tüm çiftleri karşılaştırır; bu formda 6 kategorik renk ayrım eşiğini
-   geçemez, bu yüzden popülasyon nötr çizilir ve yalnızca kullanıcının kümesi vurgulanır.
+5. Saçılım grafikleri tüm çiftleri karşılaştırdığı için en fazla 3 kategorik renk taşıyabilir
+   (ölçüldü); daha fazlası gerekiyorsa seri kesilir ya da grafik ayrıştırılır.
 """
 
 from typing import Dict, List, Sequence

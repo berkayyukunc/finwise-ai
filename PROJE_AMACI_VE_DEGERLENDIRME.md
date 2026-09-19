@@ -31,9 +31,9 @@ Piyasadaki CRUD harcama takipçileri ve LLM sarmalayıcıları bir adayın ML, N
 | 8 | "8 banka parser'ı" birbirinin kopyası; 8 test PDF'i tek şablon; `VAKIFBANK WORLD` → Yapı Kredi | Strateji deseni isimde; parmak izi tüm metinde `in` ile | Veri güdümlü `BankProfile` + başlıkta ağırlıklı tam-kelime parmak izi; 8 **farklı** yerleşim + `truth.json` | `test_bank_statement_matches_ground_truth[×8]`, `test_fingerprint_collisions` |
 | 9 | Walk-forward Holt-Winters'ı değil hareketli ortalamayı ölçüyor; aylık üst sınır günlük sınırların toplamı (+%69, kapsama %100); boş veriye 10.500 TL "tahmin" | Doğrulanan model ≠ kullanılan model; hatalar tam korelasyonlu varsayılıyor | Bileşen tabanlı tahmin; gerçek adaylar üzerinde walk-forward; blok bootstrap; `insufficient_data` | Ampirik kapsama **%92** · `test_insufficient_data_never_fabricates_numbers` |
 | 10 | Anomalisiz ekstrede %5-8 işlem işaretleniyor; doküman "5D" diyor, kod 4D | Sabit `contamination`; ortalama/std maskeleme etkisi | Medyan/MAD (log tutar) + mükerrer çekim kuralı + destekleyici IF (mutlak eşik) | Yanlış alarm **%0,5** · `test_masking_effect_small_sample` |
-| 11 | 6 arketip etiketinin **6'sı da yanlış**; boş ekstre = "Taksit Mimarı" | K-Means küme kimliği keyfidir; sabit `ARCHETYPE_NAMES[id]` | Centroid'ler prototiplere Macar algoritmasıyla eşlenir; yetersiz veride etiket yok | 6/6 doğru, 4 tohumda · saflık > %95 |
+| 11 | *(modül v2.1'de kaldırıldı, bkz. aşağısı)* 6 arketip etiketinin **6'sı da yanlış**; boş ekstre = "Taksit Mimarı" | K-Means küme kimliği keyfidir; sabit `ARCHETYPE_NAMES[id]` | Centroid'ler prototiplere Macar algoritmasıyla eşlenir; yetersiz veride etiket yok | 6/6 doğru, 4 tohumda · saflık > %95 |
 | 12 | `rag/agent.py` = 5 `elif`; `question.lower()` Türkçe I hatası (`GIDA`, `DIŞARI` tanınmıyor); anlaşılmayan soru özete düşüyor | İsimlendirme gerçeği yansıtmıyor | `src/copilot/`: niyet yönlendirici → araçlar → şablon; katlama ile normalizasyon; dürüst "bilmiyorum" | `test_every_amount_in_answer_comes_from_tool_result`, 16 yönlendirme testi |
-| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 282 test, %95 kapsama |
+| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 272 test, %95 kapsama |
 
 Denetimin ortaya çıkardığı, v1 raporunda **olmayan** üç hata da çözüldü: (a) örnek PDF'lerde İ/Ş/Ğ harfleri `·` olarak basılıyordu (`TÜRK·YE ·· BANKASI`) ve bir "font onarımı" eşlemesi bunu gizliyordu; (b) anomali modülünde işyeri anahtarı sayıları maskelediği için farklı şubeler mükerrer çekim sayılıyordu; (c) tahmin modeli seçim ölçütü (14 günlük toplam hata) haftalık mevsimselliği yapısal olarak göremiyordu → günlük RMSE'ye geçildi. Üçü de yeni yazılan testler tarafından yakalandı.
 
@@ -84,7 +84,6 @@ kaçan 6 giyim satırı var; bunları tek tek eğitim verisine eklemek ölçüm 
 | Anomali | Medyan/MAD + kurallar + destekleyici Isolation Forest | Sabit eşik / tek başına IF | n≈40 işlemde IF kararsızdır ve `contamination` her ekstrede alarm üretir. Sağlam istatistik açıklanabilir ("medyanın 47 katı") ve maskelemeye dayanıklıdır. Ekstrede saat yoktur → "gece harcaması" iddiası yoktur. |
 | Açıklanabilirlik | SHAP TreeExplainer | LIME / permütasyon | Ağaçlarda tam (exact) ve hızlı. Koşul: toplanabilirliği bozmadan sunmak (Bölüm 2, #4). |
 | Soru-cevap | Kural tabanlı yönlendirici + Pandas araçları | Serbest LLM | Sayılar kod tarafından üretilir; bu, endüstrideki "LLM yönlendirir, kod hesaplar" kalıbının LLM'siz alt kümesidir. Bedeli: dar dil kapsamı. Sistem bunu gizlemez, anlamadığını söyler. Yönlendirici katmanı LLM ile değiştirilebilir; araç ve şablon katmanı aynı kalır. |
-| Kümeleme | K-Means + Macar eşlemesi + PCA | if-else kuralları | Popülasyon sentetik olduğundan bu bir **yöntem gösterimidir**; arayüzde böyle etiketlenir. |
 
 ---
 
@@ -106,10 +105,9 @@ Ayrıntı: [`SECURITY.md`](SECURITY.md). Özet: sistem PCI-DSS/KVKK uyumu **iddi
 │   │   └── bank_parsers/               # BankProfile verisi + tek ayrıştırma motoru + gerçek checksum
 │   ├── nlp/                            # preprocessor · dataset_generator · models · explainer
 │   ├── predictive/                     # forecasting · anomaly · wealth_simulator
-│   ├── clustering/archetypes.py
 │   ├── copilot/agent.py                # (eski adı: rag/) niyet yönlendirici + deterministik araçlar
 │   └── utils/statement_loader.py       # PDF → DataFrame hattının tek giriş noktası
-├── tests/                              # 282 test (aşağıda)
+├── tests/                              # 272 test (aşağıda)
 ├── scripts/                            # generate_synthetic_pdf (8 yerleşim + truth.json) · benchmark_models
 ├── data/gold/pos_gold_set.csv          # 170 elle yazılmış değerlendirme satırı (eğitimde kullanılmaz)
 ├── data/models/                        # model + pos_model_metrics.json + benchmark_results.json
@@ -131,7 +129,6 @@ v1'deki 21 test ağırlıklı olarak "çökmüyor mu?" sorusunu soruyordu (`asse
 | `test_predictive.py` | 30 | Uydurma sayı yok · iade/ödeme dışlama (birebir değer) · yükümlülük ayrıştırma · doğrulanan model = kullanılan model · **ampirik aralık kapsaması** · yanlış alarm oranı · maskeleme etkisi · mükerrer çekim istisnaları · Fisher özdeşliği |
 | `test_nlp.py` | 27 | Sızıntısız ayrım · sızıntılı > sızıntısız metrik · abstain · altın set **regresyon tabanı** · SHAP toplanabilirliği · XSS |
 | `test_preprocessor.py` | 23 | 6 diakritik çifti · NFD · marka bozmayan gürültü regex'i · idempotentlik (hypothesis, 300 örnek) |
-| `test_clustering.py` | 17 | Her prototip kendi etiketini alır (4 tohum) · global RNG'ye dokunmama · determinizm |
 | `test_security.py` | 11 | Silahlandırılmış PDF · açılma bombası · şifreli/bozuk/aşırı büyük/taranmış PDF |
 | `test_integration_pipeline.py` | 8 | 8 yerleşimde uçtan uca sözleşme + çıktıda PII yok |
 
@@ -151,7 +148,7 @@ python -m pytest --cov  → 273 passed in ~25s · TOTAL coverage 95% (kapı: %85
 4. **Süreç yalıtımı yok.** Ayrıştırıcı zafiyetlerine karşı sandbox üretim gereksinimidir.
 5. **Tek ekstre = ~30 gün.** Mevsimsel modeller ancak birden çok ekstre birlikte yüklendiğinde (arayüz bunu destekler) devreye girer.
 6. **Aralık kapsaması %92** (nominal %95): artıklar örneklem içi olduğundan hafif iyimserdir.
-7. **Kümeleme popülasyonu sentetiktir**; getiri simülatörü sabit oranlı senaryodur.
+7. Getiri simülatörü sabit oranlı bir senaryodur; oynaklık, vergi ve masraf içermez.
 
 **Yol haritası:** kullanıcı düzeltmeleriyle aktif öğrenme → çoklu ekstre geçmişi (mevsimsellik + yeni işyeri sinyali) → Türkçe NER → ayrıştırıcıyı ayrı, kaynak limitli süreçte çalıştırma → yönlendirici katmanına isteğe bağlı yerel LLM.
 
