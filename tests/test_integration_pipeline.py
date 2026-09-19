@@ -47,3 +47,13 @@ def test_full_pipeline_on_every_layout(bank_samples, classifier, idx):
     # Gizlilik: hattın hiçbir çıktısında PII yok
     blob = df.to_csv() + copilot.ask("En çok nereye harcadım?")
     assert truth["card_holder"] not in blob and truth["tc"] not in blob
+
+
+def test_multiple_statements_are_merged_and_duplicates_skipped(bank_samples, classifier):
+    from src.utils.statement_loader import process_statements
+    files = [(f"{key}.pdf", data) for key, data, _ in bank_samples[:3]]
+    statements, df, errors = process_statements(files + [files[0], ("bozuk.pdf", b"pdf degil")], classifier=classifier)
+    assert len(statements) == 3 and all(s.checksum_valid for s in statements)
+    assert len(df) == sum(len(s.transactions) for s in statements) and df["statement"].nunique() == 3
+    assert len(errors) == 2 and any("ikinci kez" in e for e in errors) and any("bozuk.pdf" in e for e in errors)
+    assert df["date"].is_monotonic_increasing and "is_anomaly" in df.columns

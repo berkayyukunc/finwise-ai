@@ -33,9 +33,24 @@ Piyasadaki CRUD harcama takipçileri ve LLM sarmalayıcıları bir adayın ML, N
 | 10 | Anomalisiz ekstrede %5-8 işlem işaretleniyor; doküman "5D" diyor, kod 4D | Sabit `contamination`; ortalama/std maskeleme etkisi | Medyan/MAD (log tutar) + mükerrer çekim kuralı + destekleyici IF (mutlak eşik) | Yanlış alarm **%0,5** · `test_masking_effect_small_sample` |
 | 11 | 6 arketip etiketinin **6'sı da yanlış**; boş ekstre = "Taksit Mimarı" | K-Means küme kimliği keyfidir; sabit `ARCHETYPE_NAMES[id]` | Centroid'ler prototiplere Macar algoritmasıyla eşlenir; yetersiz veride etiket yok | 6/6 doğru, 4 tohumda · saflık > %95 |
 | 12 | `rag/agent.py` = 5 `elif`; `question.lower()` Türkçe I hatası (`GIDA`, `DIŞARI` tanınmıyor); anlaşılmayan soru özete düşüyor | İsimlendirme gerçeği yansıtmıyor | `src/copilot/`: niyet yönlendirici → araçlar → şablon; katlama ile normalizasyon; dürüst "bilmiyorum" | `test_every_amount_in_answer_comes_from_tool_result`, 16 yönlendirme testi |
-| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 229 test, %94 kapsama |
+| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 260 test, %95 kapsama |
 
 Denetimin ortaya çıkardığı, v1 raporunda **olmayan** üç hata da çözüldü: (a) örnek PDF'lerde İ/Ş/Ğ harfleri `·` olarak basılıyordu (`TÜRK·YE ·· BANKASI`) ve bir "font onarımı" eşlemesi bunu gizliyordu; (b) anomali modülünde işyeri anahtarı sayıları maskelediği için farklı şubeler mükerrer çekim sayılıyordu; (c) tahmin modeli seçim ölçütü (14 günlük toplam hata) haftalık mevsimselliği yapısal olarak göremiyordu → günlük RMSE'ye geçildi. Üçü de yeni yazılan testler tarafından yakalandı.
+
+### Saha testi: gerçek ekstreyle ilk temas
+
+v2 yayımlandıktan sonra yazarın kendi Vakıfbank ekstresi yüklendi ve sistem **0 işlem** ayrıştırdı. Sistem bunu gizlemedi ("Hiç işlem satırı ayrıştırılamadı", "Sağlama TUTMADI"), ama sonuç README'deki "profiller gerçek ekstreyle doğrulanmamıştır" sınırının ne kadar gerçek olduğunu gösterdi. Teşhis, içerik görülmeden yapıldı (`scripts/diagnose_statement.py`: harfler `A`, rakamlar `9`). Sentetik yerleşimlerin hiçbirinin modellemediği altı gerçek:
+
+| Gerçek ekstrede görülen | Etkisi | Çözüm |
+| :-- | :-- | :-- |
+| İngilizce sayı biçimi (`1,234.56`) | Hiçbir tutar tanınmadı → 0 işlem | İki yerel biçim + belge düzeyinde çoğunluk oylaması (`detect_locale`) |
+| Çok sütunlu tutarlar (`TL | USD | puan`): `69,90 0,00` | "Son tutarı al" kuralı puan sütununu okurdu | Satır sonundaki kesintisiz tutar koşusunun **ilk** elemanı |
+| Açıklamaya gömülü yabancı tutar (`USD 12.99`, `(2400.00 TL İşlemin 1/4 Taksidi)`) | İşlem tutarı sanılırdı | Belgenin yerel biçiminde olmayan sayı işlem tutarı sayılmaz |
+| Önceki dönem devri + ödeme satırları | Sağlama formülü tutmazdı | Dönem borcu = devir + tüm hareketler (ödeme/iade eksi) |
+| `+` öneki / soneki alacak; `3. Taksit … 3x1,250.00`, `Son Taksit`, `İşlemin 1/4 Taksidi` | Ödemeler harcama, taksit toplamı bilinmez olurdu | İşaret ve taksit desenleri genişletildi |
+| İki sütunlu başlıkta etiketsiz adres bloğu | Adres karartılmıyordu (sütunlar iç içe geçince tarama duruyordu) | Hizasız satırı atla + ilk sayfa başlık bölgesi her zaman karartılır |
+
+Sonuç: 5 gerçek Vakıfbank PDF'inin 5'inde sağlama uçtan uca kuruşu kuruşuna tuttu; 4 Ziraat ekstresinde de tuttu, ancak bunlar ekran görüntüsünden elle aktarılan satırlarla sınandı (Ziraat PDF'inin metin çıkarımı doğrulanmadı). Gerçek ekstreler ve onlardan alınan hiçbir değer repoda yer almaz; iki sentetik yerleşim bu yapıları taklit edecek biçimde yeniden kuruldu ve 31 yeni test eklendi. Ders: **sentetik test verisini, test edilen varsayımı bilen kişi üretirse doğrulama döngüseldir** — v1 denetiminde başkasına söylenen bu cümle, v2'nin kendi ayrıştırıcısı için de geçerliydi.
 
 ---
 
@@ -73,7 +88,7 @@ Ayrıntı: [`SECURITY.md`](SECURITY.md). Özet: sistem PCI-DSS/KVKK uyumu **iddi
 │   ├── clustering/archetypes.py
 │   ├── copilot/agent.py                # (eski adı: rag/) niyet yönlendirici + deterministik araçlar
 │   └── utils/statement_loader.py       # PDF → DataFrame hattının tek giriş noktası
-├── tests/                              # 229 test (aşağıda)
+├── tests/                              # 260 test (aşağıda)
 ├── scripts/                            # generate_synthetic_pdf (8 yerleşim + truth.json) · benchmark_models
 ├── data/gold/pos_gold_set.csv          # 170 elle yazılmış değerlendirme satırı (eğitimde kullanılmaz)
 ├── data/models/                        # model + pos_model_metrics.json + benchmark_results.json
@@ -102,18 +117,18 @@ v1'deki 21 test ağırlıklı olarak "çökmüyor mu?" sorusunu soruyordu (`asse
 ```text
 $ make check
 ruff check .            → All checks passed!
-python -m pytest --cov  → 229 passed in ~25s · TOTAL coverage 94% (kapı: %85)
+python -m pytest --cov  → 260 passed in ~25s · TOTAL coverage 95% (kapı: %85)
 ```
 
 ---
 
 ## BÖLÜM 7: Bilinen sınırlar (bir değerlendiricinin sorması gerekenler)
 
-1. **Gerçek veri yok.** Banka profilleri gerçek ekstreyle, altın set bağımsız bir etiketleyiciyle doğrulanmamıştır. Altın seti modelin yazarı yazmıştır (n=170, ±%6).
+1. **Gerçek veri sınırlı.** Ayrıştırıcı uçtan uca yalnızca tek bankanın (Vakıfbank) 5 gerçek PDF'iyle doğrulandı; Ziraat satır düzeyinde sınandı; diğer 6 yerleşim temsilidir; altın set bağımsız bir etiketleyiciyle doğrulanmamıştır. Altın seti modelin yazarı yazmıştır (n=170, ±%6).
 2. **Görülmemiş zincir markada doğruluk 0,50.** Model bunu çözemez; işyeri sözlüğü, MCC kodu ya da kullanıcı geri bildirimi gerekir.
 3. **OCR ve NER yok.** Taranmış PDF reddedilir; etiketsiz serbest metindeki kişi adları yakalanmaz.
 4. **Süreç yalıtımı yok.** Ayrıştırıcı zafiyetlerine karşı sandbox üretim gereksinimidir.
-5. **Tek ekstre = ~30 gün.** Mevsimsel modeller ancak birden çok ekstre birleştirildiğinde devreye girer; çoklu ekstre birleştirme henüz yoktur.
+5. **Tek ekstre = ~30 gün.** Mevsimsel modeller ancak birden çok ekstre birlikte yüklendiğinde (arayüz bunu destekler) devreye girer.
 6. **Aralık kapsaması %92** (nominal %95): artıklar örneklem içi olduğundan hafif iyimserdir.
 7. **Kümeleme popülasyonu sentetiktir**; getiri simülatörü sabit oranlı senaryodur.
 

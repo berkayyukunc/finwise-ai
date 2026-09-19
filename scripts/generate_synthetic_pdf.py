@@ -37,9 +37,14 @@ class Layout:
     key: str
     title: str
     date_fmt: str = "%d.%m.%Y"
-    refund_style: str = "prefix_minus"     # prefix_minus | suffix_minus | alacak | plus_suffix
-    installment_style: str = "paren"       # paren | slash_taksit | taksit_prefix
-    header_style: str = "top_labeled"      # top_labeled | envelope_block
+    refund_style: str = "prefix_minus"     # prefix_minus | suffix_minus | alacak | plus_suffix | plus_prefix
+    installment_style: str = "paren"       # paren | slash_taksit | taksit_prefix | nth_taksit_column
+    header_style: str = "top_labeled"      # top_labeled | envelope_block | two_column_unlabeled
+    amount_locale: str = "tr"              # tr: 1.250,50 | en: 1,250.50
+    previous_balance: bool = False         # önceki dönem devri + ödeme satırı (gerçek ekstre muhasebesi)
+    previous_balance_style: str = "dated_top"   # dated_top: tarihli ilk satır | undated_bottom: tarihsiz 'ÖNCEKİ AYDAN DEVİR' son satır
+    extra_amount_columns: bool = False     # 'TL Tutar | USD Tutar | Puan': TL tutarından SONRA başka tutar sütunları
+    card_mask: str = "*"
     repeat_header: bool = False
     amount_suffix: str = ""
     double_date: bool = False
@@ -50,10 +55,16 @@ class Layout:
 LAYOUTS = [
     Layout("garanti", "GARANTİ BBVA BONUS - KREDİ KARTI HESAP ÖZETİ"),
     Layout("isbank", "TÜRKİYE İŞ BANKASI MAXIMUM KART EKSTRESİ", date_fmt="%d/%m/%Y", refund_style="suffix_minus", installment_style="slash_taksit"),
-    Layout("ziraat", "T.C. ZİRAAT BANKASI BANKKART HESAP ÖZETİ", double_date=True, refund_style="alacak"),
+    # Gerçek ekstre ekran görüntülerinin YAPISINDAN türetilmiştir: çok sütunlu tutarlar, açıklamaya gömülü yabancı tutar,
+    # 'İşlemin 1/4 Taksidi', sonek '+' alacak, tarihsiz 'ÖNCEKİ AYDAN DEVİR', '#' maskeli kart.
+    Layout("ziraat", "T.C. ZİRAAT BANKASI BANKKART HESAP ÖZETİ", refund_style="plus_suffix_tight", installment_style="islemin",
+           previous_balance=True, previous_balance_style="undated_bottom", extra_amount_columns=True, card_mask="#"),
     Layout("yapikredi", "YAPI VE KREDİ BANKASI A.Ş. WORLDCARD EKSTRESİ", date_fmt="%d.%m.%y", refund_style="plus_suffix", installment_style="taksit_prefix"),
     Layout("akbank", "AKBANK T.A.Ş. AXESS HESAP ÖZETİ", header_style="envelope_block", repeat_header=True, include_transfer=True),
-    Layout("vakifbank", "VAKIFBANK WORLD KREDİ KARTI EKSTRESİ", amount_suffix=" TL", refund_style="suffix_minus"),
+    # Gerçek bir ekstrenin YAPISINDAN (içeriğinden değil) türetilmiştir: EN tutar biçimi, '+' alacak öneki, önceki dönem
+    # devri + ödeme, 'N. Taksit' + kalan taksit sütunu, iki sütunlu başlıkta etiketsiz adres bloğu.
+    Layout("vakifbank", "VAKIFBANK WORLD KREDİ KARTI HESAP ÖZETİ (TL)", amount_locale="en", refund_style="plus_prefix",
+           installment_style="nth_taksit_column", header_style="two_column_unlabeled", previous_balance=True),
     Layout("qnb", "QNB FİNANSBANK CARDFINANS HESAP ÖZETİ", desc_first=True, date_fmt="%d/%m/%Y"),
     Layout("enpara", "ENPARA.COM KREDİ KARTI EKSTRESİ", date_fmt="%Y-%m-%d", refund_style="alacak", installment_style="slash_taksit"),
 ]
@@ -63,6 +74,10 @@ def tr_amount(value: float) -> str:
     return f"{abs(value):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def fmt_amount(value: float, layout: "Layout") -> str:
+    return f"{abs(value):,.2f}" if layout.amount_locale == "en" else tr_amount(value)
+
+
 def _write(page: "pymupdf.Page", pos, text: str, size: float = 9) -> None:
     tw = pymupdf.TextWriter(page.rect)
     tw.append(pos, text, font=FONT, fontsize=size)
@@ -70,9 +85,9 @@ def _write(page: "pymupdf.Page", pos, text: str, size: float = 9) -> None:
 
 
 def _format_amount(amount: float, is_refund: bool, layout: Layout) -> str:
-    s = tr_amount(amount)
+    s = fmt_amount(amount, layout)
     if is_refund:
-        s = {"prefix_minus": f"-{s}", "suffix_minus": f"{s}-", "alacak": f"{s} (A)", "plus_suffix": f"{s} +"}[layout.refund_style]
+        s = {"prefix_minus": f"-{s}", "suffix_minus": f"{s}-", "alacak": f"{s} (A)", "plus_suffix": f"{s} +", "plus_prefix": f"+{s}", "plus_suffix_tight": f"{s}+"}[layout.refund_style]
     return s + layout.amount_suffix
 
 
@@ -81,7 +96,8 @@ def _format_description(tx: Dict[str, Any], layout: Layout) -> str:
     if tx.get("is_installment"):
         no, total = tx["current_installment"], tx["total_installments"]
         desc = desc.replace(f"({no:02d}/{total:02d})", "").strip()
-        desc += {"paren": f" ({no:02d}/{total:02d})", "slash_taksit": f" {no}/{total} TAKSİT", "taksit_prefix": f" TAKSİT {no}/{total}"}[layout.installment_style]
+        desc += {"paren": f" ({no:02d}/{total:02d})", "slash_taksit": f" {no}/{total} TAKSİT", "taksit_prefix": f" TAKSİT {no}/{total}",
+                 "nth_taksit_column": f" {no}. Taksit", "islemin": f" {no:02d}.Tak İSTANBUL"}[layout.installment_style]
     return desc[:52]
 
 
@@ -107,9 +123,24 @@ def _draw_header(page, layout: Layout, stmt: Dict[str, Any], first_page: bool) -
         _write(page, (70, 250), f"T.C. Kimlik No: {stmt['synthetic_full_tc']}", 9)
         return 290
 
+    if layout.header_style == "two_column_unlabeled":
+        # Sol sütun: etiketli özet. Sağ sütun: 'Sayın <ad>' + ETİKETSİZ adres; satırlar dikeyde iç içe geçer.
+        _write(page, (50, 90), f"Dönem Borcunuz : {fmt_amount(summary['total_statement_debt_try'], layout)} TL", 10)
+        _write(page, (50, 104), f"Asgari Ödeme Tutarı : {fmt_amount(summary['minimum_payment_try'], layout)} TL", 10)
+        _write(page, (50, 118), f"Son Ödeme Tarihi : {stmt['due_date']}", 10)
+        _write(page, (50, 132), f"T.C. Kimlik No : {stmt['synthetic_full_tc']}", 10)
+        _write(page, (50, 146), f"Kart No : {stmt['card_number'].replace(' ', '')}", 10)
+        _write(page, (50, 160), f"Hesap Kesim Tarihi : {stmt['cutoff_date']}", 10)
+        _write(page, (330, 97), f"Sayın {stmt['card_holder']}", 10)
+        _write(page, (330, 111), "LALE CAD. GÜNEŞ SOK. B BLOK NO:", 10)
+        _write(page, (330, 125), "14 İÇ KAPI NO: 7 ÜSKÜDAR / İSTANBUL", 10)
+        _write(page, (50, 180), "ornek.kullanici@example.com", 9)
+        _write(page, (50, 200), "Asgari ödeme tutarının altında ödeme yapılması halinde akdi faiz %4.25 ve gecikme faizi %4.55 uygulanır.", 7)
+        return 250
+
     _write(page, (50, 65), f"Kart Sahibi: {stmt['card_holder']}", 10)
     _write(page, (50, 80), f"T.C. Kimlik No: {stmt['synthetic_full_tc']}", 10)
-    _write(page, (50, 95), f"Kart No: {stmt['card_number']}", 10)
+    _write(page, (50, 95), f"Kart No: {stmt['card_number'].replace('*', layout.card_mask).replace(' ', '-' if layout.card_mask == '#' else ' ')}", 10)
     _write(page, (50, 110), f"Hesap Kesim Tarihi: {stmt['cutoff_date']}", 10)
     _write(page, (350, 65), f"Dönem Borcu: {tr_amount(summary['total_statement_debt_try'])} TL", 11)
     _write(page, (350, 80), f"Asgari Ödeme: {tr_amount(summary['minimum_payment_try'])} TL", 10)
@@ -133,12 +164,28 @@ def create_synthetic_pdf(layout: Layout, output_path: str, seed: int) -> Dict[st
         summary["total_statement_debt_try"] = round(summary["total_statement_debt_try"] + 1000.0, 2)
         summary["gross_purchases_try"] = round(summary["gross_purchases_try"] + 1000.0, 2)
 
+    previous_balance = None
+    if layout.previous_balance:  # 5.250 TL devir, 4.750 TL ödeme -> 500 TL yeni döneme taşınır
+        previous_balance, payment = 5250.00, 4750.00
+        first_date = stmt["transactions"][0]["date"]
+        stmt["transactions"].insert(2, {"date": stmt["transactions"][2]["date"], "description": "ÖDEMENİZ İÇİN TEŞEKKÜR EDERİZ", "amount": -payment, "type": "PAYMENT"})
+        summary = stmt["accounting_summary"]
+        summary["total_statement_debt_try"] = round(summary["total_statement_debt_try"] + previous_balance - payment, 2)
+        summary["minimum_payment_try"] = round(summary["total_statement_debt_try"] * 0.20, 2)
+
     doc = pymupdf.open()
     page = doc.new_page(width=595, height=842)
     y = _draw_header(page, layout, stmt, first_page=True)
     page.draw_line((50, y - 18), (545, y - 18), color=(0.2, 0.2, 0.2), width=1.2)
     _write(page, (50, y - 6), "AÇIKLAMA / TARİH / TUTAR" if layout.desc_first else "TARİH / AÇIKLAMA / TUTAR (TL)", 8)
     y += 12
+    if layout.extra_amount_columns:  # açıklamaya gömülü yabancı para tutarı (EN biçimi) işlem tutarı sanılmamalı
+        stmt["transactions"][0]["description"] = stmt["transactions"][0]["description"][:30] + " USD 12.99"
+    if previous_balance is not None and layout.previous_balance_style == "dated_top":
+        _write(page, (50, y), datetime.strptime(first_date, "%d.%m.%Y").strftime(layout.date_fmt), 8)
+        _write(page, (130, y), "ÖNCEKİ DÖNEM HESAP ÖZETİ BAKİYESİ", 8)
+        _write(page, (470, y), fmt_amount(previous_balance, layout), 8)
+        y += 18
 
     for tx in stmt["transactions"]:
         if y > 780:
@@ -147,7 +194,7 @@ def create_synthetic_pdf(layout: Layout, output_path: str, seed: int) -> Dict[st
         d = datetime.strptime(tx["date"], "%d.%m.%Y")
         date_str = d.strftime(layout.date_fmt)
         desc = _format_description(tx, layout)
-        amount = _format_amount(float(tx["amount"]), tx.get("type") == "REFUND", layout)
+        amount = _format_amount(float(tx["amount"]), tx.get("type") in ("REFUND", "PAYMENT"), layout)
 
         if layout.desc_first:
             _write(page, (50, y), desc, 8)
@@ -160,7 +207,20 @@ def create_synthetic_pdf(layout: Layout, output_path: str, seed: int) -> Dict[st
             _write(page, (50, y), date_str, 8)
             _write(page, (130, y), desc, 8)
         _write(page, (470, y), amount, 8)
+        if layout.installment_style == "islemin" and tx.get("is_installment"):
+            full = float(tx["amount"]) * tx["total_installments"]
+            _write(page, (300, y), f"({full:.2f} TL İşlemin {tx['current_installment']}/{tx['total_installments']} Taksidi)", 7)
+        elif layout.extra_amount_columns and tx.get("type") not in ("REFUND", "PAYMENT"):
+            _write(page, (540, y), "0,00", 8)  # puan sütunu
+        if layout.installment_style == "nth_taksit_column" and tx.get("is_installment"):
+            left = tx["total_installments"] - tx["current_installment"]
+            _write(page, (522, y), f"{left}x{fmt_amount(float(tx['amount']), layout)}" if left else "Son Taksit", 8)
         y += 18
+
+    if previous_balance is not None and layout.previous_balance_style == "undated_bottom":
+        _write(page, (130, y), "ÖNCEKİ AYDAN DEVİR", 9)
+        _write(page, (470, y), fmt_amount(previous_balance, layout), 8)
+        _write(page, (510, y), "0,00", 8)
 
     doc.set_metadata({"author": stmt["card_holder"], "title": f"Ekstre - {stmt['card_holder']}"})
     doc.save(output_path, garbage=4, deflate=True)
@@ -178,7 +238,8 @@ def create_synthetic_pdf(layout: Layout, output_path: str, seed: int) -> Dict[st
         "transaction_count": len(stmt["transactions"]),
         "refund_total": -sum(t["amount"] for t in stmt["transactions"] if t.get("type") == "REFUND"),
         "third_party_names": ["MEHMET DENİZ ÖRNEK"] if layout.include_transfer else [],
-        "address_fragments": ["ÇİÇEK SOKAK", "CAFERAĞA", "34710"] if layout.header_style == "envelope_block" else [],
+        "address_fragments": {"envelope_block": ["ÇİÇEK SOKAK", "CAFERAĞA", "34710"], "two_column_unlabeled": ["LALE CAD", "ÜSKÜDAR", "ornek.kullanici"]}.get(layout.header_style, []),
+        "previous_balance": previous_balance,
     }
     with open(output_path.replace(".pdf", ".truth.json"), "w", encoding="utf-8") as f:
         json.dump(truth, f, ensure_ascii=False, indent=2)

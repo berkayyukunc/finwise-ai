@@ -11,9 +11,7 @@ import plotly.express as px
 import streamlit as st
 
 from src.clustering.archetypes import SpendingArchetypeClusterer
-from src.document_ai.parser_engine import ScannedPDFError
-from src.document_ai.sanitizer import PDFPasswordRequiredError, PDFSanitizerError
-from src.utils.statement_loader import load_classifier, process_statement
+from src.utils.statement_loader import load_classifier, process_statements
 
 st.set_page_config(
     page_title="FinWise-AI | Finansal Belge Zekası",
@@ -87,9 +85,11 @@ with st.sidebar:
         )
     else:
         uploaded_file = st.file_uploader(
-            "PDF Ekstre Dosyası Yükleyin:",
+            "PDF ekstre(ler)inizi yükleyin:",
             type=["pdf"],
-            help="Dosya yalnızca bu oturumun belleğinde işlenir; diske yazılmaz."
+            accept_multiple_files=True,
+            help="Birden çok ayın ekstresini birlikte seçebilirsiniz; geçmiş uzadıkça tahmin ve anomali analizi güçlenir. "
+                 "Dosyalar yalnızca bu oturumun belleğinde işlenir; diske yazılmaz."
         )
         pdf_password = st.text_input("PDF şifresi (varsa):", type="password", help="Bankalar e-ekstreyi çoğunlukla şifreli gönderir.")
 
@@ -105,7 +105,7 @@ st.markdown("<div class='main-header'>FinWise-AI: Finansal Belge Zekası & Tahmi
 st.caption("Document AI + POS sınıflandırma + bileşen tabanlı tahmin + XAI (SHAP) + kümeleme · tüm örnek ekstreler sentetiktir")
 
 # Veri Yükleme ve İşleme
-pdf_bytes = None
+pdf_files = []
 if source_choice == "Örnek Hazır Ekstre (0 TL / Hızlı Test)":
     file_map = {
         "Garanti BBVA (Taksitli & İadeli)": "data/statements/sample_garanti.pdf",
@@ -120,35 +120,42 @@ if source_choice == "Örnek Hazır Ekstre (0 TL / Hızlı Test)":
     path = file_map[selected_sample]
     if os.path.exists(path):
         with open(path, "rb") as f:
-            pdf_bytes = f.read()
+            pdf_files = [(os.path.basename(path), f.read())]
 
 elif uploaded_file:
-    pdf_bytes = uploaded_file.read()
+    pdf_files = [(f.name, f.read()) for f in uploaded_file]
 
-if not pdf_bytes:
+if not pdf_files:
     st.warning("Lütfen sol taraftan bir örnek ekstre seçin veya kendi PDF ekstrenizi yükleyin.")
     st.stop()
 
-# 1-3. Document AI -> NLP kategori -> anomali (tek giriş noktası)
-try:
-    with st.spinner("Ekstre güvenlik denetiminden geçiriliyor, ayrıştırılıyor ve PII karartılıyor..."):
-        stmt, df = process_statement(pdf_bytes, classifier=nlp_pipeline, password=pdf_password or None)
-except PDFPasswordRequiredError as e:
-    st.error(f"🔒 {e}")
-    st.stop()
-except ScannedPDFError as e:
-    st.error(f"🖼️ {e}")
-    st.stop()
-except PDFSanitizerError as e:
-    st.error(f"⛔ PDF güvenlik denetimini geçemedi: {e}")
+# 1-3. Document AI -> NLP kategori -> anomali (tek giriş noktası; birden çok ekstre birleştirilir)
+with st.spinner(f"{len(pdf_files)} ekstre güvenlik denetiminden geçiriliyor, ayrıştırılıyor ve PII karartılıyor..."):
+    statements, df, errors = process_statements(pdf_files, classifier=nlp_pipeline, password=pdf_password or None)
+
+for err in errors:
+    st.error(f"⛔ {err}")
+if not statements:
     st.stop()
 
+stmt = statements[-1]  # borç / asgari kartları en güncel ekstreyi gösterir
 st.session_state.update({
     "parsed_statement": stmt, "transactions_df": df, "bank_name": stmt.bank_name,
     "total_debt": stmt.total_debt, "min_payment": stmt.min_payment,
 })
-for w in stmt.warnings:
-    st.warning(w)
+for st_item in statements:
+    for w in st_item.warnings:
+        st.warning(f"**{st_item.bank_name} · {st_item.period_end or '?'}:** {w}")
+
+if len(statements) > 1:
+    st.markdown(f"### 🗂️ Yüklenen {len(statements)} Ekstre")
+    label = {True: "✓ tuttu", False: "✗ TUTMADI", None: "— yapılamadı"}
+    st.dataframe(pd.DataFrame([{
+        "Banka": x.bank_name, "Dönem Sonu": x.period_end, "İşlem": len(x.transactions), "Devreden": x.previous_balance,
+        "Dönem Borcu": x.total_debt, "Asgari": x.min_payment, "Sağlama": label[x.checksum_valid],
+    } for x in statements]).style.format({"Devreden": "{:,.2f}", "Dönem Borcu": "{:,.2f}", "Asgari": "{:,.2f}"}, na_rep="—"),
+        use_container_width=True, hide_index=True)
+    st.caption("Aşağıdaki analizler tüm ekstrelerin birleşimi üzerindedir; borç ve asgari kartları en güncel ekstreye aittir.")
 
 # KPI Kartları (Bento Grid)
 st.markdown("### 📊 Finansal Özet Kartları")

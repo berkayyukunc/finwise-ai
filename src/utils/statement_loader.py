@@ -8,7 +8,7 @@ böylece iki ayrı kopya birbirinden sapmaz.
 
 import logging
 import os
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import pandas as pd
 
@@ -43,6 +43,49 @@ def process_statement(
 
     df = TransactionAnomalyDetector().detect_anomalies(stmt.to_dataframe())
     return stmt, df
+
+
+def process_statements(
+    pdf_files: List[Tuple[str, bytes]],
+    classifier: Optional[POSClassifierPipeline] = None,
+    password: Optional[str] = None,
+) -> Tuple[List[ParsedStatement], pd.DataFrame, List[str]]:
+    """
+    Birden çok ekstreyi işler ve tek bir işlem tablosunda birleştirir.
+
+    Returns:
+        (başarıyla işlenen ekstreler [dönem sonuna göre sıralı], birleşik DataFrame, hata mesajları)
+        Aynı dosya iki kez yüklenirse (aynı banka + dönem sonu + dönem borcu) ikinci kopya atlanır.
+        Anomali tespiti birleşik geçmiş üzerinde yeniden çalıştırılır: kategori medyanları daha çok veriyle daha sağlamdır.
+    """
+    statements: List[ParsedStatement] = []
+    frames: List[pd.DataFrame] = []
+    errors: List[str] = []
+    seen = set()
+    for name, data in pdf_files:
+        try:
+            stmt, df = process_statement(data, classifier=classifier, password=password)
+        except Exception as exc:  # tek bir bozuk dosya diğerlerini engellememeli
+            errors.append(f"{name}: {exc}")
+            continue
+        key = (stmt.bank_name, stmt.period_end, round(stmt.total_debt, 2), len(stmt.transactions))
+        if key in seen:
+            errors.append(f"{name}: aynı ekstre ikinci kez yüklenmiş, atlandı.")
+            continue
+        seen.add(key)
+        statements.append(stmt)
+        frames.append(df.assign(statement=f"{stmt.bank_name} · {stmt.period_end or name}"))
+
+    if not frames:
+        return [], pd.DataFrame(columns=ParsedStatement.COLUMNS), errors
+
+    order = sorted(range(len(statements)), key=lambda i: statements[i].period_end or "")
+    statements = [statements[i] for i in order]
+    merged = pd.concat([frames[i] for i in order], ignore_index=True)
+    if len(frames) > 1:
+        base_cols = [c for c in merged.columns if c not in ("is_anomaly", "anomaly_score", "iforest_score", "anomaly_type", "anomaly_reason")]
+        merged = TransactionAnomalyDetector().detect_anomalies(merged[base_cols])
+    return statements, merged.sort_values("date", kind="stable").reset_index(drop=True), errors
 
 
 def ensure_statement_loaded(default_pdf_path: str = DEFAULT_SAMPLE_PDF) -> pd.DataFrame:

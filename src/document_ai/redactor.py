@@ -13,8 +13,8 @@ Katmanlar:
 4. Havale karşı tarafı: HAVALE / EFT / FAST satırlarındaki üçüncü kişi adları.
 5. Metadata           : /Info (Author, Title...) ve XMP silinir; dosya garbage=4 ile
                          yeniden yazılır (yetim nesnelerde eski içerik kalmaz).
-6. Emniyet supabı     : İlk sayfada hiçbir isim etiketi bulunamazsa (etiketsiz, pencereli
-                         zarf tipi adres bloğu), ilk işlem satırının üstündeki bölge karartılır.
+6. Başlık bölgesi     : İlk sayfada ilk işlem satırının üstü HER ZAMAN karartılır. Gerçek ekstrelerde ad/adres
+                         çoğunlukla etiketsiz bloktur; ayrıştırma önceden bittiği için bunun maliyeti yoktur.
 
 Bilinen Sınır (dürüstlük): Etiketsiz ve serbest metin içindeki kişi adları (ör. işyeri
 adı olarak geçen şahıs isimleri) kural tabanlı yaklaşımla yakalanamaz; bunun için NER gerekir.
@@ -104,6 +104,8 @@ class PIIRedactor:
     TRANSFER_FILLERS = {"giden", "gelen", "para", "karttan", "karta", "kart", "hesaba", "hesaptan", "islemi", "alici", "gonderen", "-", ":"}
     TRANSFER_FEE_WORDS = {"ucreti", "ucret", "masrafi", "masraf", "komisyonu", "komisyon", "bsmv"}
     MAX_NAME_TOKENS = 4
+    MAX_ADDRESS_LINES = 4
+    ADDRESS_SCAN_WINDOW = 14
     PERSON_MASK = "[KİŞİ]"
 
     # ------------------------------------------------------------ doğrulayıcılar
@@ -208,6 +210,23 @@ class PIIRedactor:
         lines = [_Line(sorted(ws)) for ws in grouped.values()]
         return sorted(lines, key=lambda ln: (round(ln.y0, 1), ln.x0))
 
+    @staticmethod
+    def _visual_rows(page: "pymupdf.Page", tolerance: float = 3.0) -> List[Tuple[float, str]]:
+        """
+        Kelimeleri blok yapısına değil Y koordinatına göre satırlara toplar: [(y0, satır_metni)].
+        Gerçek ekstrelerde tablo hücreleri (tarih | açıklama | tutar) ayrı bloklardır; blok bazlı
+        satırlar tek başına işlem olarak tanınamaz, görsel satır tanınır.
+        """
+        words = sorted(page.get_text("words"), key=lambda w: ((w[1] + w[3]) / 2, w[0]))
+        rows: List[List[tuple]] = []
+        for w in words:
+            center = (w[1] + w[3]) / 2
+            if rows and abs(center - (rows[-1][0][1] + rows[-1][0][3]) / 2) <= tolerance:
+                rows[-1].append(w)
+            else:
+                rows.append([w])
+        return [(min(w[1] for w in row), " ".join(w[4] for w in sorted(row, key=lambda w: w[0]))) for row in rows]
+
     @classmethod
     def _label_hits(cls, line: _Line) -> List[Tuple[int, int, str]]:
         """Satırdaki etiketler: (başlangıç, bitiş, tür). Tür: name / address / ... / stop."""
@@ -252,14 +271,18 @@ class PIIRedactor:
                 # 'Adres:' ya da 'Sayın <ad>' altındaki hizalı, etiketsiz satırlar adres devamıdır
                 if kind in ("address", "name") and idxs:
                     anchor_x = line.words[idxs[0]][0]
-                    prev = line
-                    for nxt in lines[li + 1: li + 4]:  # hizalı devam satırları
+                    prev, taken = line, 0
+                    # İki sütunlu başlıklarda diğer sütunun satırları araya girer: hizasız satır ATLANIR (taramayı bitirmez)
+                    for nxt in lines[li + 1: li + 1 + cls.ADDRESS_SCAN_WINDOW]:
+                        if nxt.y0 - prev.y0 > 2.2 * max(prev.height, 1) or taken >= cls.MAX_ADDRESS_LINES:
+                            break
                         aligned = abs(nxt.x0 - anchor_x) < 4 or abs(nxt.x0 - line.x0) < 4
-                        close = 0 < nxt.y0 - prev.y0 < 2.2 * max(prev.height, 1)
-                        if not (aligned and close) or cls._label_hits(nxt) or GenericBankParser.parse_line(nxt.text):
+                        if not aligned or nxt.y0 <= prev.y0:
+                            continue
+                        if cls._label_hits(nxt) or GenericBankParser.parse_line(nxt.text):
                             break
                         mark(nxt, range(len(nxt.words)), "address")
-                        prev = nxt
+                        prev, taken = nxt, taken + 1
 
             for start, end, kind in cls._pattern_matches(line.text):
                 mark(line, line.words_in(start, end), kind)
@@ -296,13 +319,16 @@ class PIIRedactor:
             for rects, lines in zip(page_rects, pages_lines):
                 rects.extend(cls._name_rects(lines, known_names, report))
 
-            if len(doc) > 0 and not known_names:
-                first_tx_y = next((ln.y0 for ln in pages_lines[0] if GenericBankParser.parse_line(ln.text)), None)
+            # İlk sayfanın başlık bölgesi (ilk işlem satırının üstü) HER ZAMAN karartılır. Gerçek ekstrelerde ad ve adres
+            # çoğunlukla etiketsiz bir blok olarak basılır ve kural tabanlı tespitle güvenilir biçimde yakalanamaz.
+            # Ayrıştırma bu noktadan önce tamamlandığı için başlığı kaybetmenin maliyeti yoktur: güvenli varsayılan budur.
+            if len(doc) > 0:
+                first_tx_y = next((y for y, text in cls._visual_rows(doc[0]) if GenericBankParser.parse_line(text)), None)
                 page_rect = doc[0].rect
                 zone_bottom = (first_tx_y - 2) if first_tx_y else page_rect.y0 + page_rect.height * 0.25
                 page_rects[0].append(pymupdf.Rect(page_rect.x0, page_rect.y0, page_rect.x1, zone_bottom))
                 report.fallback_zone_used = True
-                report.add("fallback_zone")
+                report.add("header_zone")
 
             for page, rects in zip(doc, page_rects):
                 for r in rects:

@@ -53,6 +53,7 @@ class ParsedStatement:
     checksum_diff: Optional[float] = None
     stated_total_debt: Optional[float] = None
     computed_total: float = 0.0
+    previous_balance: Optional[float] = None       # Önceki dönemden devreden bakiye (varsa)
     due_date: Optional[str] = None
     parser_name: str = "generic"
     fingerprint_score: int = 0

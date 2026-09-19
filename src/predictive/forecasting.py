@@ -125,11 +125,27 @@ class SpendingForecaster:
                 recurring_keys.append(name)
         return by_category | key.isin(recurring_keys)
 
+    INSTALLMENT_RECENCY_DAYS = 35
+
+    def _latest_installments(self) -> pd.DataFrame:
+        """
+        Birden çok ekstre birleştirildiğinde aynı alışveriş 1/4, 2/4, 3/4 olarak tekrar görünür.
+        Gelecek ayın yükümlülüğü yalnızca SON dönemde görülen taksitlerden doğar; her alışveriş için
+        (taksit numarası çıkarılmış açıklama + toplam taksit + tutar) anahtarıyla en ileri taksit tutulur.
+        """
+        inst = self.installments
+        if inst.empty:
+            return inst
+        recent = inst[inst["date"] >= inst["date"].max() - pd.Timedelta(days=self.INSTALLMENT_RECENCY_DAYS)].copy()
+        recent["_key"] = (recent["clean_description"].astype(str).str.replace(r"\d+", "#", regex=True) + "|"
+                          + recent["installment_total"].astype(str) + "|" + recent["amount"].round(0).astype(str))
+        return recent.sort_values("installment_no").groupby("_key", sort=False).tail(1)
+
     # ---------------------------------------------------- bilinen yükümlülükler
     def known_obligations(self) -> Dict[str, Any]:
         """Gelecek 30 günde kesinleşmiş / beklenen ödemeler."""
         inst_items = []
-        for _, r in self.installments.iterrows():
+        for _, r in self._latest_installments().iterrows():
             no = int(r["installment_no"])
             total = int(r["installment_total"]) if pd.notna(r["installment_total"]) else None
             if total is not None and no >= total:

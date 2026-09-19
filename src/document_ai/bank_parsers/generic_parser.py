@@ -54,16 +54,26 @@ class GenericBankParser(BaseBankParser):
 
     DATE_REGEX = re.compile(r"(?<![\d.,/-])(?:(\d{1,2})([./-])(\d{1,2})\2(\d{4}|\d{2})|(\d{4})-(\d{2})-(\d{2}))(?![\d/-])")
 
-    # [işaret] 1.250,50 | 250,00 [TL] [(A) | A | B | - | +]
+    # [işaret] tutar [TL] [işaret]. İki yerel biçim de desteklenir:
+    #   TR: 1.250,50 | 250,00      EN: 1,250.50 | 250.00  (bazı bankalar ekstreyi bu biçimde basar)
+    # Bakışlar (lookaround) tarihin bir parçasını ('15.08' <- 15.08.2026) ya da oranları (%4.25) tutar sanmayı engeller.
     AMOUNT_REGEX = re.compile(
-        r"(?<![\w.,])(?P<sign>[-+])?\s?(?P<num>\d{1,3}(?:\.\d{3})+,\d{2}|\d+,\d{2})"
-        r"(?:\s?(?:TL|TRY)\b)?\s?(?P<mark>\((?:A|B)\)|[AB]\b|[-+](?![\d]))?(?![\d,])"
+        r"(?<![\w.,%:])(?P<sign>[-+])?\s?"
+        r"(?P<num>\d{1,3}(?:\.\d{3})+,\d{2}|\d{1,3}(?:,\d{3})+\.\d{2}|\d+[.,]\d{2})"
+        r"(?:\s?(?:TL|TRY)\b)?\s?(?P<mark>\((?:A|B)\)|[AB]\b|[-+](?![\d]))?(?![.,]?\d)"
     )
+    # Kredi kartı ekstresinde '+', '-' , '(A)' alacak kaydıdır (ödeme / iade): borcu azaltır
+    CREDIT_SIGNS = {"-", "+"}
     CREDIT_MARKS = {"(A)", "A", "-", "+"}
+
+    # Taksit sütunu: '3x1,250.00' (kalan taksit × tutar) ya da 'Son Taksit'
+    REMAINING_INSTALLMENT_REGEX = re.compile(r"(?:(?<!\w)(\d{1,2})\s?[xX]\s?\d[\d.,]*|\bSON\s+TAKS[İIi]T)(?:\s+[\d.,]+)?\s*$", re.IGNORECASE)  # sonda puan sütunu olabilir
+    PREVIOUS_BALANCE_REGEX = re.compile(r"\b(onceki donem|onceki hesap|onceki aydan|devreden|devir)\b")
 
     INSTALLMENT_PATTERNS = [
         re.compile(r"\(\s*(\d{1,2})\s*/\s*(\d{1,2})\s*\)"),
-        re.compile(r"(\d{1,2})\s*/\s*(\d{1,2})\s*\.?\s*TAKS[İI]T", re.IGNORECASE),
+        re.compile(r"[İIi]ŞLEM[İIi]N\s+(\d{1,2})\s*/\s*(\d{1,2})", re.IGNORECASE),          # '(2400.00 TL İşlemin 1/4 Taksidi)'
+        re.compile(r"(\d{1,2})\s*/\s*(\d{1,2})\s*\.?\s*TAKS[İI][TD]", re.IGNORECASE),
         re.compile(r"(\d{1,2})\s*\.\s*TAKS[İI]T(?:\s*/\s*(\d{1,2}))?", re.IGNORECASE),
         re.compile(r"TAKS[İI]T\s*[:-]?\s*(\d{1,2})\s*/\s*(\d{1,2})", re.IGNORECASE),
     ]
@@ -113,8 +123,10 @@ class GenericBankParser(BaseBankParser):
 
     @classmethod
     def _match_to_decimal(cls, m: re.Match) -> Decimal:
-        value = Decimal(m.group("num").replace(".", "").replace(",", "."))
-        negative = m.group("sign") == "-" or (m.group("mark") or "").strip() in cls.CREDIT_MARKS
+        num = m.group("num")
+        decimal_sep = num[-3]  # desen gereği sondan 3. karakter ondalık ayraçtır
+        value = Decimal(num.replace("." if decimal_sep == "," else ",", "").replace(",", "."))
+        negative = m.group("sign") in cls.CREDIT_SIGNS or (m.group("mark") or "").strip() in cls.CREDIT_MARKS
         return -value if negative else value
 
     @staticmethod
@@ -167,20 +179,64 @@ class GenericBankParser(BaseBankParser):
         return TransactionType.EXPENSE
 
     # ------------------------------------------------------------ satır ayrıştırma
+    @staticmethod
+    def amount_locale(num: str) -> str:
+        """'1.250,50' -> 'tr' ; '1,250.50' -> 'en' (ondalık ayraç sondan 3. karakterdir)."""
+        return "tr" if num[-3] == "," else "en"
+
     @classmethod
-    def parse_line(cls, line: str) -> Optional[ParsedTransaction]:
+    def detect_locale(cls, page_texts: List[str]) -> Optional[str]:
+        """
+        Belgenin sayı biçimi: çoğunluk kazanır. Azınlıktaki biçim, açıklamaya gömülü yabancı tutardır
+        ('ORNEK USD 12.99', '(2400.00 TL İşlemin 1/4 Taksidi)') ve işlem tutarı SAYILMAZ.
+        """
+        counts = {"tr": 0, "en": 0}
+        for text in page_texts:
+            for m in cls.AMOUNT_REGEX.finditer(text):
+                counts[cls.amount_locale(m.group("num"))] += 1
+        if counts["tr"] == counts["en"]:
+            return None
+        return max(counts, key=counts.get)  # type: ignore[arg-type]
+
+    @classmethod
+    def _tl_amount_run(cls, line: str, locale: Optional[str]) -> List[re.Match]:
+        """
+        Satır sonundaki KESİNTİSİZ tutar koşusu (aralarında yalnızca boşluk olan tutarlar).
+        Çok sütunlu ekstrelerde ('TL Tutar | USD Tutar | Puan') TL tutarı bu koşunun İLK elemanıdır:
+        '... TR 69,90 0,00' -> [69,90, 0,00]. Tek sütunlu ekstrede koşu tek elemanlıdır.
+        """
+        matches = [m for m in cls.AMOUNT_REGEX.finditer(line) if locale is None or cls.amount_locale(m.group("num")) == locale]
+        run: List[re.Match] = []
+        for m in reversed(matches):
+            gap = line[m.end():run[0].start()] if run else line[m.end():]
+            if gap.strip():
+                break
+            run.insert(0, m)
+        return run or matches[-1:]
+
+    @classmethod
+    def parse_line(cls, line: str, locale: Optional[str] = None) -> Optional[ParsedTransaction]:
+        # Sondaki taksit sütunu ('3x1,250.00' / 'Son Taksit') tutar değildir; önce ayrılır
+        remaining: Optional[int] = None
+        tail = cls.REMAINING_INSTALLMENT_REGEX.search(line)
+        if tail:
+            remaining = int(tail.group(1)) if tail.group(1) else 0
+            line = line[:tail.start()].rstrip()
+
         dates = [(m, cls.parse_date(m)) for m in cls.DATE_REGEX.finditer(line)]
         dates = [(m, d) for m, d in dates if d]
-        amounts = list(cls.AMOUNT_REGEX.finditer(line))
+        amounts = cls._tl_amount_run(line, locale)
         if not dates or not amounts:
             return None
         if cls.NON_TRANSACTION_REGEX.search(fold(line)):
             return None
 
-        amount_match = amounts[-1]  # yabancı para + TL karşılığı varsa TL sondadır
+        amount_match = amounts[0]
         amount = cls._match_to_decimal(amount_match)
 
-        desc = line[:amount_match.start()] + " " + line[amount_match.end():]
+        desc = line[:amount_match.start()]  # tutarın sağındakiler diğer sütunlardır (USD, puan), açıklama değildir
+        if not re.search(r"[^\W\d_]", desc):  # tutar açıklamadan önce geliyorsa açıklama sağdadır
+            desc = line[:amount_match.start()] + " " + line[amounts[-1].end():]
         for m, _ in dates:
             desc = desc.replace(m.group(0), " ")
         desc = re.sub(r"\s+", " ", desc).strip(" -|")
@@ -191,14 +247,24 @@ class GenericBankParser(BaseBankParser):
         if tx_type == TransactionType.REFUND and amount > 0:
             amount = -amount  # 'İADE' yazıp işaret taşımayan satır
         inst_no, inst_total = cls.extract_installment(desc)
+        if inst_no is not None and inst_total is None and remaining is not None:
+            inst_total = inst_no + remaining
         return ParsedTransaction(
             date=dates[0][1], raw_description=desc, clean_description=desc, amount=float(amount),
             installment_no=inst_no, installment_total=inst_total, transaction_type=tx_type,
         )
 
+    @classmethod
+    def parse_previous_balance(cls, line: str, locale: Optional[str] = None) -> Optional[Decimal]:
+        """'ÖNCEKİ DÖNEM HESAP ÖZETİ BAKİYESİ 5,250.00' -> 5250.00 (işlem değildir; muhasebe için gerekir)."""
+        if not cls.PREVIOUS_BALANCE_REGEX.search(fold(line)):
+            return None
+        amounts = cls._tl_amount_run(line, locale)
+        return abs(cls._match_to_decimal(amounts[0])) if amounts else None
+
     # --------------------------------------------------------------- başlık
     @classmethod
-    def split_header(cls, page_texts: List[str], max_lines: int = 30) -> str:
+    def split_header(cls, page_texts: List[str], max_lines: int = 60) -> str:
         """İlk sayfada ilk işlem satırına kadar olan metin (parmak izi ve özet alanları için)."""
         header: List[str] = []
         for line in (page_texts[0] if page_texts else "").split("\n")[:max_lines]:
@@ -229,7 +295,7 @@ class GenericBankParser(BaseBankParser):
                     if m and cls.parse_date(m):
                         fields[name] = cls.parse_date(m)
                 elif name == "card":
-                    m = re.search(r"(?:\d{4}|[*xX]{4}|\d{2}[*xX]{2})[ -]?(?:[\d*xX]{4}[ -]?){2}(\d{4})", tail)
+                    m = re.search(r"(?:\d{4}|[*xX#]{4}|\d{2}[*xX#]{2})[ -]?(?:[\d*xX#]{4}[ -]?){2}(\d{4})", tail)
                     if m:
                         fields[name] = m.group(1)
         return fields
@@ -242,16 +308,22 @@ class GenericBankParser(BaseBankParser):
 
     def parse_text(self, page_texts: List[str]) -> ParsedStatement:
         warnings: List[str] = []
-        transactions = [tx for text in page_texts for line in text.split("\n") if (tx := self.parse_line(line)) is not None]
+        locale = self.detect_locale(page_texts)
+        transactions = [tx for text in page_texts for line in text.split("\n") if (tx := self.parse_line(line, locale)) is not None]
         header = self.extract_header_fields(self.split_header(page_texts))
 
         if not transactions:
             warnings.append("Hiç işlem satırı ayrıştırılamadı.")
 
-        computed = sum(
-            (Decimal(str(round(t.amount, 2))) for t in transactions if t.transaction_type != TransactionType.PAYMENT),
-            Decimal("0.00"),
-        )
+        previous_balance = next((pb for text in page_texts for line in text.split("\n") if (pb := self.parse_previous_balance(line, locale)) is not None), None)
+
+        def total(include_payments: bool) -> Decimal:
+            return sum((Decimal(str(round(t.amount, 2))) for t in transactions
+                        if include_payments or t.transaction_type != TransactionType.PAYMENT), Decimal("0.00"))
+
+        # Ekstre muhasebesi: dönem borcu = önceki bakiye + TÜM hareketler (ödeme ve iadeler eksi).
+        # Önceki bakiye satırı yoksa ödemeler hesaba katılamaz (neyi kapattıkları bilinmez) ve dışarıda bırakılır.
+        computed = previous_balance + total(include_payments=True) if previous_balance is not None else total(include_payments=False)
         stated: Optional[Decimal] = header.get("total_debt")  # type: ignore[assignment]
         if stated is None:
             checksum_valid, diff = None, None
@@ -279,6 +351,7 @@ class GenericBankParser(BaseBankParser):
             checksum_diff=diff,
             stated_total_debt=float(stated) if stated is not None else None,
             computed_total=float(computed),
+            previous_balance=float(previous_balance) if previous_balance is not None else None,
             due_date=header.get("due_date"),  # type: ignore[arg-type]
             parser_name=self.profile.key,
             warnings=warnings,

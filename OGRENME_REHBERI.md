@@ -95,7 +95,7 @@ Bu proje bu soruya verilebilecek en iyi malzemeyi içerir. Hepsi [`PROJE_AMACI_V
 
 ```bash
 make install && make train   # kilitli bağımlılıklar, sızıntısız eğitim + metrik JSON
-make check                   # ruff + 229 test + kapsama kapısı
+make check                   # ruff + 260 test + kapsama kapısı
 make run                     # arayüz
 ```
 

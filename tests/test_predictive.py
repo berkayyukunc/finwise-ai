@@ -50,6 +50,18 @@ def test_known_obligations_are_separated_from_stochastic_part():
     assert c["discretionary"] == pytest.approx(df["amount"].mean() * 30, rel=0.02), "Taksit/abonelik stokastik seriye karışmamalı"
 
 
+def test_installments_are_not_double_counted_across_merged_statements():
+    """Birleştirilmiş 3 ekstrede aynı alışveriş 1/4, 2/4, 3/4 olarak görünür; gelecek ayın yükümlülüğü TEK kalemdir."""
+    base = daily_frame(90, weekly=False).assign(clean_description="MARKET", category="Market / Bakkal", installment_no=None, installment_total=None)
+    inst = pd.DataFrame({"date": ["2026-01-23", "2026-02-23", "2026-03-23", "2026-01-10"], "amount": [600.0, 600.0, 600.0, 500.0],
+                         "transaction_type": "INSTALLMENT", "category": "Giyim / Aksesuar", "installment_total": [4, 4, 4, 2],
+                         "clean_description": ["S/ORNEK 01.Tak (1/4 Taksidi)", "S/ORNEK 02.Tak (2/4 Taksidi)", "S/ORNEK 03.Tak (3/4 Taksidi)", "ESKI ALISVERIS (1/2)"],
+                         "installment_no": [1, 2, 3, 1]})
+    ob = SpendingForecaster(pd.concat([base, inst], ignore_index=True)).known_obligations()
+    assert len(ob["installments"]) == 1, "Eski dönemlerin taksit satırları yeniden sayılmamalı"
+    assert ob["installments"][0]["next_installment"] == 4 and ob["installments_total"] == pytest.approx(600.0)
+
+
 def test_same_merchant_in_two_calendar_months_is_not_a_subscription():
     df = daily_frame(30, weekly=False).assign(clean_description="X", category="Market / Bakkal")
     visits = pd.DataFrame({"date": ["2026-01-28", "2026-02-03"], "amount": [465.0, 470.0], "transaction_type": "EXPENSE", "clean_description": "CARREFOURSA", "category": "Market / Bakkal"})

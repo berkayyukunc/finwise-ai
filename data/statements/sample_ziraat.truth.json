@@ -5,10 +5,11 @@
   "card_last_four": "2526",
   "cutoff_date": "2024-05-15",
   "due_date": "2024-05-25",
-  "total_debt": 26363.49,
-  "min_payment": 5272.7,
-  "transaction_count": 32,
+  "total_debt": 26863.49,
+  "min_payment": 5372.7,
+  "transaction_count": 33,
   "refund_total": 550.0,
   "third_party_names": [],
-  "address_fragments": []
+  "address_fragments": [],
+  "previous_balance": 5250.0
 }

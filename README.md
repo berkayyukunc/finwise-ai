@@ -35,10 +35,11 @@ Aşağıdaki her sayı `make train`, `make benchmark` ya da `make test` ile yeni
 | | Gecikme / boyut | 0,57 ms tekil · 0,05 ms/satır batch · 2 MB |
 | **Document AI** | 8 farklı yerleşim: işlem sayısı, dönem borcu, asgari, son 4 hane, tarihler | 8/8 birebir; sağlama farkı 0,00 TL |
 | | PII sızıntısı (ad, TC, adres, 3. kişi adı, metadata; tüm sayfalar) | 0 |
+| | **Gerçek ekstrelerde saha doğrulaması** (yazarın kendi ekstreleri; repoda yer almaz) | 5 Vakıfbank PDF'i uçtan uca: 5/5 sağlama tuttu (fark 0,00 TL). 4 Ziraat ekstresi ekran görüntüsünden aktarılan satırlarla: 4/4 (PDF metin çıkarımı sınanmadı) |
 | **Tahmin** | Aylık %95 aralığın ampirik kapsaması (100 simülasyon) | **%92** |
 | **Anomali** | Anomalisiz sentetik ekstrelerde yanlış alarm | **%0,5** (ekstrelerin %76'sında hiç alarm yok) |
 | **Kümeleme** | Centroid→arketip eşleme doğruluğu | 6/6 (4 farklı tohumda) · saflık > %95 |
-| **Kalite** | Test / kapsama / lint | 229 test · %94 satır+dal kapsaması · ruff temiz |
+| **Kalite** | Test / kapsama / lint | 260 test · %95 satır+dal kapsaması · ruff temiz |
 
 > **İlk sürümle fark:** İlk sürüm "%99,9 F1" bildiriyordu; bu, sentetik veride rastgele ayrımın yol açtığı şablon sızıntısıydı (test satırlarının %35,5'i eğitimde vardı; markalar ayrılınca F1 0,205'e düşüyordu). Hikâyenin tamamı: [`PROJE_AMACI_VE_DEGERLENDIRME.md`](PROJE_AMACI_VE_DEGERLENDIRME.md).
 
@@ -87,7 +88,7 @@ flowchart TD
 python3 -m venv venv && source venv/bin/activate
 make install        # kilitli bağımlılıklar + geliştirme araçları
 make train          # sentetik veri → sızıntısız değerlendirme → model + metrik JSON
-make check          # ruff + 229 test + %85 kapsama kapısı
+make check          # ruff + 260 test + %85 kapsama kapısı
 make run            # http://localhost:8501
 ```
 
@@ -101,13 +102,25 @@ Diğer hedefler: `make benchmark` (Arena tablosunu yeniden ölç) · `make sampl
 
 ---
 
+## Ekstreniz ayrıştırılamazsa
+
+Sistem uydurmaz: işlem bulamazsa ya da sağlama tutmazsa bunu açıkça söyler. Nedenini **içeriği ifşa etmeden** görmek için:
+
+```bash
+PYTHONPATH=. python scripts/diagnose_statement.py /yol/ekstre.pdf
+```
+
+Çıktıda harfler `A`, rakamlar `9` ile maskelenir (`99.99.9999 AAAAA AAA 9,999.99`); yalnızca biçim kalır. Bu çıktıyı bir issue'ya güvenle yapıştırabilirsiniz.
+Arayüz birden çok ayın ekstresini birlikte kabul eder; geçmiş uzadıkça mevsimsel tahmin modelleri ve abonelik tespiti devreye girer.
+
 ## Gizlilik
 
 Gerçek ekstrenizi **yalnızca yerelde** işleyin. Herkese açık bir bulut kurulumuna gerçek ekstre yüklemek KVKK md. 9 kapsamında yurt dışına veri aktarımı sayılabilir; canlı demo yalnızca sentetik örnekler içindir. Proje PCI-DSS ya da KVKK uyumlu olduğunu **iddia etmez**; neyin korunduğu ve neyin korunmadığı [`SECURITY.md`](SECURITY.md) içindedir.
 
 ## Bilinen sınırlar
 
-- Banka profilleri ve altın set gerçek verilerle doğrulanmamıştır (sentetik yerleşimler, yazarın elle yazdığı satırlar).
+- Ayrıştırıcı yalnızca Vakıfbank'ın gerçek PDF'leriyle uçtan uca, Ziraat'in ise ekran görüntüsünden aktarılan satırlarıyla doğrulanmıştır; bu iki sentetik yerleşim o ekstrelerin *yapısından* (içeriğinden değil) türetilmiştir. Diğer altı banka yerleşimi temsilidir. İlk sürüm gerçek ekstrede 0 işlem ayrıştırmıştı (İngilizce sayı biçimi, çok sütunlu tutarlar, devir muhasebesi); ayrıntı için [`PROJE_AMACI_VE_DEGERLENDIRME.md`](PROJE_AMACI_VE_DEGERLENDIRME.md).
+- Altın set yazarın elle yazdığı satırlardan oluşur; bağımsız bir etiketleyiciyle doğrulanmamıştır.
 - OCR yoktur: taranmış PDF'ler açık bir hata mesajıyla reddedilir.
 - Etiketsiz serbest metindeki kişi adları için NER gerekir.
 - Arketip popülasyonu sentetiktir; kümeleme bir yöntem gösterimidir, segmentasyon bulgusu değildir.

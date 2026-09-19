@@ -5,10 +5,15 @@
   "card_last_four": "3008",
   "cutoff_date": "2024-05-15",
   "due_date": "2024-05-25",
-  "total_debt": 26572.79,
-  "min_payment": 5314.56,
-  "transaction_count": 35,
+  "total_debt": 27072.79,
+  "min_payment": 5414.56,
+  "transaction_count": 36,
   "refund_total": 550.0,
   "third_party_names": [],
-  "address_fragments": []
+  "address_fragments": [
+    "LALE CAD",
+    "ÜSKÜDAR",
+    "ornek.kullanici"
+  ],
+  "previous_balance": 5250.0
 }

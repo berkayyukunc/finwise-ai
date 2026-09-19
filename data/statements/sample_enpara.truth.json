@@ -10,5 +10,6 @@
   "transaction_count": 33,
   "refund_total": 550.0,
   "third_party_names": [],
-  "address_fragments": []
+  "address_fragments": [],
+  "previous_balance": null
 }
