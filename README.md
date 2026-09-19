@@ -14,6 +14,7 @@ license: mit
 > PDF ekstre → güvenlik denetimi → ayrıştırma + **kuruşu kuruşuna sağlama** → PII karartma → POS sınıflandırma (+SHAP) → bileşen tabanlı tahmin → anomali → kümeleme → deterministik soru-cevap.
 > Tamamı CPU'da, sıfır API maliyetiyle, **sentetik veriyle** ve ölçülmüş rakamlarla.
 
+[![CI](https://github.com/berkayyukunc/finwise-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/berkayyukunc/finwise-ai/actions/workflows/ci.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
