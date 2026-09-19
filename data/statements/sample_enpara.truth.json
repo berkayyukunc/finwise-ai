@@ -1,0 +1,14 @@
+{
+  "layout": "enpara",
+  "card_holder": "ÖRNEK KULLANICI 976",
+  "tc": "19242380368",
+  "card_last_four": "1875",
+  "cutoff_date": "2024-05-15",
+  "due_date": "2024-05-25",
+  "total_debt": 23508.7,
+  "min_payment": 4701.74,
+  "transaction_count": 33,
+  "refund_total": 550.0,
+  "third_party_names": [],
+  "address_fragments": []
+}

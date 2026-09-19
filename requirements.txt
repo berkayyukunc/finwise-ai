@@ -1,0 +1,24 @@
+# FinWise-AI çalışma zamanı bağımlılıkları — TAM SÜRÜM KİLİTLİ.
+# Neden: joblib ile kaydedilen model (scikit-learn / lightgbm nesneleri) sürümler arası taşınabilir değildir.
+# Güncelleme: sürümü yükselt -> `make train` -> `make test` -> modeli ve metrikleri birlikte commit et.
+pandas==3.0.6
+numpy==2.5.3
+scipy==1.18.1
+
+# Document AI
+pdfplumber==0.11.10
+pymupdf==1.28.2
+pikepdf==10.13.0.post1
+
+# Makine öğrenmesi & XAI
+scikit-learn==1.9.1
+lightgbm==4.7.0
+shap==0.52.0
+joblib==1.6.0
+
+# Zaman serisi
+statsmodels==0.15.0
+
+# Arayüz
+streamlit==1.64.0
+plotly==7.1.0

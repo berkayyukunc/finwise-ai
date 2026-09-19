@@ -1,0 +1,14 @@
+{
+  "layout": "qnb",
+  "card_holder": "ÖRNEK KULLANICI 454",
+  "tc": "13703950312",
+  "card_last_four": "9486",
+  "cutoff_date": "2024-05-15",
+  "due_date": "2024-05-25",
+  "total_debt": 31183.14,
+  "min_payment": 6236.63,
+  "transaction_count": 30,
+  "refund_total": 550.0,
+  "third_party_names": [],
+  "address_fragments": []
+}

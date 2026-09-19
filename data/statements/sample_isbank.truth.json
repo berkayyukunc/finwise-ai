@@ -1,0 +1,14 @@
+{
+  "layout": "isbank",
+  "card_holder": "ÖRNEK KULLANICI 915",
+  "tc": "13186265934",
+  "card_last_four": "7568",
+  "cutoff_date": "2024-05-15",
+  "due_date": "2024-05-25",
+  "total_debt": 23871.74,
+  "min_payment": 4774.35,
+  "transaction_count": 35,
+  "refund_total": 550.0,
+  "third_party_names": [],
+  "address_fragments": []
+}

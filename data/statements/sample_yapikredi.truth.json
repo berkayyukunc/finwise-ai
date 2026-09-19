@@ -1,0 +1,14 @@
+{
+  "layout": "yapikredi",
+  "card_holder": "ÖRNEK KULLANICI 609",
+  "tc": "95377876068",
+  "card_last_four": "6487",
+  "cutoff_date": "2024-05-15",
+  "due_date": "2024-05-25",
+  "total_debt": 18468.97,
+  "min_payment": 3693.79,
+  "transaction_count": 27,
+  "refund_total": 550.0,
+  "third_party_names": [],
+  "address_fragments": []
+}

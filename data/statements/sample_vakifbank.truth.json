@@ -1,0 +1,14 @@
+{
+  "layout": "vakifbank",
+  "card_holder": "ÖRNEK KULLANICI 594",
+  "tc": "78694582706",
+  "card_last_four": "3008",
+  "cutoff_date": "2024-05-15",
+  "due_date": "2024-05-25",
+  "total_debt": 26572.79,
+  "min_payment": 5314.56,
+  "transaction_count": 35,
+  "refund_total": 550.0,
+  "third_party_names": [],
+  "address_fragments": []
+}

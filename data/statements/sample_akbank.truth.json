@@ -1,0 +1,20 @@
+{
+  "layout": "akbank",
+  "card_holder": "ÖRNEK KULLANICI 531",
+  "tc": "29883350200",
+  "card_last_four": "7055",
+  "cutoff_date": "2024-05-15",
+  "due_date": "2024-05-25",
+  "total_debt": 19759.78,
+  "min_payment": 3751.96,
+  "transaction_count": 29,
+  "refund_total": 550.0,
+  "third_party_names": [
+    "MEHMET DENİZ ÖRNEK"
+  ],
+  "address_fragments": [
+    "ÇİÇEK SOKAK",
+    "CAFERAĞA",
+    "34710"
+  ]
+}

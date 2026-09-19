@@ -1,0 +1,46 @@
+{
+  "protocol": "GroupShuffleSplit(test_size=0.2, seed=42) + elle yazılmış altın set; abstain uygulanmadı",
+  "not_measured": "Türkçe BERT bu ortamda ölçülmedi (torch/transformers bağımlılığı 0 TL / CPU hedefinin dışında).",
+  "results": [
+    {
+      "model": "Çoğunluk sınıfı (taban)",
+      "unseen_merchant_macro_f1": 0.01194951664876477,
+      "gold_macro_f1": 0.01098901098901099,
+      "gold_accuracy": 0.07058823529411765,
+      "fit_sec": 0.024249708745628595,
+      "pickle_mb": 0.091617,
+      "single_ms_median": 0.1366462092846632,
+      "batch_ms_per_row": 0.0012340419925749302
+    },
+    {
+      "model": "Word TF-IDF + Naive Bayes",
+      "unseen_merchant_macro_f1": 0.6256495930535856,
+      "gold_macro_f1": 0.7745989873504106,
+      "gold_accuracy": 0.7705882352941177,
+      "fit_sec": 0.042002959176898,
+      "pickle_mb": 0.922762,
+      "single_ms_median": 0.21750014275312424,
+      "batch_ms_per_row": 0.0013127923011779785
+    },
+    {
+      "model": "Char-wb TF-IDF + Logistic Regression",
+      "unseen_merchant_macro_f1": 0.7333001279191863,
+      "gold_macro_f1": 0.8309877275687775,
+      "gold_accuracy": 0.8294117647058824,
+      "fit_sec": 0.9469960420392454,
+      "pickle_mb": 1.752604,
+      "single_ms_median": 0.1993332989513874,
+      "batch_ms_per_row": 0.013616833370178938
+    },
+    {
+      "model": "Char-wb TF-IDF + LightGBM (üretim)",
+      "unseen_merchant_macro_f1": 0.7202648623997078,
+      "gold_macro_f1": 0.8066955881611054,
+      "gold_accuracy": 0.8117647058823529,
+      "fit_sec": 16.646208457648754,
+      "pickle_mb": 5.22334,
+      "single_ms_median": 0.5702918861061335,
+      "batch_ms_per_row": 0.04775887541472912
+    }
+  ]
+}

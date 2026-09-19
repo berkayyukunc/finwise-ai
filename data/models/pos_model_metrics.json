@@ -1,0 +1,63 @@
+{
+  "trained_at": "2026-09-19T00:14:19+00:00",
+  "python": "3.12.13",
+  "sklearn": "1.9.1",
+  "lightgbm": "4.7.0",
+  "abstain_threshold": 0.55,
+  "metrics": {
+    "seen_merchant": {
+      "accuracy": 0.9770916334661355,
+      "macro_f1": 0.9781070691832238,
+      "n": 3012
+    },
+    "duplicates_removed": 2941,
+    "train_samples": 15059,
+    "num_features": 16348,
+    "train_time_sec": 56.766628459095955,
+    "unseen_merchant": {
+      "accuracy": 0.7075498987561469,
+      "macro_f1": 0.7202648623997078,
+      "n": 3457,
+      "by_source": {
+        "brand": {
+          "accuracy": 0.4955798231929277,
+          "macro_f1": 0.5061288428983519,
+          "n": 1923
+        },
+        "generic": {
+          "accuracy": 0.978689818468824,
+          "macro_f1": 0.9027993151705614,
+          "n": 1267
+        },
+        "other": {
+          "accuracy": 0.947565543071161,
+          "macro_f1": 0.13901098901098902,
+          "n": 267
+        }
+      }
+    },
+    "gold": {
+      "n": 170,
+      "accuracy": 0.8235294117647058,
+      "macro_f1": 0.8284773517270542,
+      "coverage": 0.8529411764705882,
+      "selective_accuracy": 0.8896551724137931,
+      "confident_wrong_rate": 0.047058823529411764,
+      "ece": 0.10343981214328349,
+      "by_difficulty": {
+        "easy": {
+          "n": 98,
+          "accuracy": 0.9183673469387755
+        },
+        "medium": {
+          "n": 55,
+          "accuracy": 0.8
+        },
+        "hard": {
+          "n": 17,
+          "accuracy": 0.35294117647058826
+        }
+      }
+    }
+  }
+}

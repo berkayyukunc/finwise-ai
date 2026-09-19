@@ -1,0 +1,46 @@
+[project]
+name = "finwise-ai"
+version = "2.0.0"
+description = "Kredi kartı ekstreleri için Document AI + POS sınıflandırma + bileşen tabanlı tahmin platformu (CPU, sıfır API maliyeti)"
+requires-python = ">=3.12"
+readme = "README.md"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+filterwarnings = [
+    "ignore:builtin type .* has no __module__ attribute:DeprecationWarning",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+exclude_lines = ["if __name__ == .__main__.:", "import streamlit", "pragma: no cover"]
+
+[tool.ruff]
+line-length = 180
+target-version = "py312"
+extend-exclude = ["venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "C4", "SIM"]
+ignore = [
+    "S101",    # assert: testlerde ve iç değişmezlerde bilinçli
+    "S311",    # random: sentetik veri üretimi kriptografik değildir
+    "S301",    # pickle/joblib: yalnızca kendi ürettiğimiz model dosyası yüklenir
+    "UP006", "UP007", "UP035", "UP045",  # typing.List / Optional biçimi korunuyor
+    "E501",
+    "B905",    # zip(strict=): eşit uzunluk çağrı yerlerinde yapısal olarak garanti
+    "SIM108",  # okunabilirlik: uzun ternary yerine if/else
+    "UP042",   # (str, Enum): .value serileştirme davranışı korunuyor
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S", "B011"]
+"pages/*" = ["E402", "C408"]   # plotly stil sözlükleri dict(...) ile okunaklı
+"app.py" = ["E402", "C408"]

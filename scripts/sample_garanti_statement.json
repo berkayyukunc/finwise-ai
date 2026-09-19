@@ -1,0 +1,276 @@
+{
+  "metadata": {
+    "generator": "FinWise Synthetic Statement Engine v1.0",
+    "is_synthetic": true,
+    "privacy_guarantee": "100% Zero PII / Anonymized"
+  },
+  "bank": "GARANTI",
+  "card_holder": "ÖRNEK KULLANICI 792",
+  "tc_identity_mask": "*******1668",
+  "synthetic_full_tc": "12745971668",
+  "card_number": "5400 **** **** 8886",
+  "card_last_four": "8886",
+  "statement_period": "15.04.2024 - 15.05.2024",
+  "cutoff_date": "15.05.2024",
+  "due_date": "25.05.2024",
+  "accounting_summary": {
+    "gross_purchases_try": 25487.05,
+    "refunds_reversals_try": 550.0,
+    "financing_and_taxes_try": 234.52,
+    "total_statement_debt_try": 25171.57,
+    "minimum_payment_try": 5034.31
+  },
+  "transaction_count": 31,
+  "transactions": [
+    {
+      "date": "16.04.2024",
+      "description": "SHELL MASLAK AKARYAKIT IST",
+      "amount": 515.12,
+      "type": "PURCHASE",
+      "category_hint": "Ulaşım / Akaryakıt",
+      "is_installment": false
+    },
+    {
+      "date": "17.04.2024",
+      "description": "GETİR PERAKENDE LOJİSTİK",
+      "amount": 177.71,
+      "type": "PURCHASE",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "17.04.2024",
+      "description": "GETİR PERAKENDE LOJİSTİK",
+      "amount": 325.39,
+      "type": "PURCHASE",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "18.04.2024",
+      "description": "MİGROS TİC A.Ş. İSTANBUL TR",
+      "amount": 895.72,
+      "type": "PURCHASE",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "19.04.2024",
+      "description": "İGDAŞ DOĞALGAZ DAĞITIM",
+      "amount": 1716.46,
+      "type": "PURCHASE",
+      "category_hint": "Fatura",
+      "is_installment": false
+    },
+    {
+      "date": "19.04.2024",
+      "description": "ESPRESSOLAB LEVENT",
+      "amount": 106.41,
+      "type": "PURCHASE",
+      "category_hint": "Yeme-İçme",
+      "is_installment": false
+    },
+    {
+      "date": "21.04.2024",
+      "description": "SPOTIFY ABONELİK STOCKHOLM",
+      "amount": 64.99,
+      "type": "PURCHASE",
+      "category_hint": "Abonelik",
+      "is_installment": false
+    },
+    {
+      "date": "23.04.2024",
+      "description": "STARBUCKS KAHVE BEBEK",
+      "amount": 325.84,
+      "type": "PURCHASE",
+      "category_hint": "Yeme-İçme",
+      "is_installment": false
+    },
+    {
+      "date": "23.04.2024",
+      "description": "YEMEKSEPETİ ELEKTRONİK İST",
+      "amount": 262.55,
+      "type": "PURCHASE",
+      "category_hint": "Yeme-İçme",
+      "is_installment": false
+    },
+    {
+      "date": "27.04.2024",
+      "description": "ZARA İSTİNYEPARK GİYİM",
+      "amount": 4691.03,
+      "type": "PURCHASE",
+      "category_hint": "Giyim & Alışveriş",
+      "is_installment": false
+    },
+    {
+      "date": "27.04.2024",
+      "description": "SPOTIFY ABONELİK STOCKHOLM",
+      "amount": 64.99,
+      "type": "PURCHASE",
+      "category_hint": "Abonelik",
+      "is_installment": false
+    },
+    {
+      "date": "28.04.2024",
+      "description": "MİGROS TİC A.Ş. İSTANBUL TR",
+      "amount": 1125.05,
+      "type": "PURCHASE",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "28.04.2024",
+      "description": "A101 YENİ MAĞAZACILIK A.Ş.",
+      "amount": 136.02,
+      "type": "PURCHASE",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "29.04.2024",
+      "description": "İSKİ SU FATURASI VEZNE",
+      "amount": 322.78,
+      "type": "PURCHASE",
+      "category_hint": "Fatura",
+      "is_installment": false
+    },
+    {
+      "date": "30.04.2024",
+      "description": "YEMEKSEPETİ ELEKTRONİK İST",
+      "amount": 259.43,
+      "type": "PURCHASE",
+      "category_hint": "Yeme-İçme",
+      "is_installment": false
+    },
+    {
+      "date": "01.05.2024",
+      "description": "SHELL MASLAK AKARYAKIT IST",
+      "amount": 690.83,
+      "type": "PURCHASE",
+      "category_hint": "Ulaşım / Akaryakıt",
+      "is_installment": false
+    },
+    {
+      "date": "01.05.2024",
+      "description": "HEPSİBURADA ELEKTRONİK",
+      "amount": 4905.02,
+      "type": "PURCHASE",
+      "category_hint": "Teknoloji",
+      "is_installment": false
+    },
+    {
+      "date": "01.05.2024",
+      "description": "MEDIAMARKT BİLGİSAYAR (03/06)",
+      "amount": 1250.0,
+      "type": "INSTALLMENT",
+      "category_hint": "Teknoloji",
+      "is_installment": true,
+      "current_installment": 3,
+      "total_installments": 6
+    },
+    {
+      "date": "02.05.2024",
+      "description": "İSKİ SU FATURASI VEZNE",
+      "amount": 254.58,
+      "type": "PURCHASE",
+      "category_hint": "Fatura",
+      "is_installment": false
+    },
+    {
+      "date": "02.05.2024",
+      "description": "BP PETROL MECİDİYEKÖY",
+      "amount": 1778.98,
+      "type": "PURCHASE",
+      "category_hint": "Ulaşım / Akaryakıt",
+      "is_installment": false
+    },
+    {
+      "date": "05.05.2024",
+      "description": "STARBUCKS KAHVE BEBEK",
+      "amount": 287.03,
+      "type": "PURCHASE",
+      "category_hint": "Yeme-İçme",
+      "is_installment": false
+    },
+    {
+      "date": "07.05.2024",
+      "description": "YEMEKSEPETİ ELEKTRONİK İST",
+      "amount": 697.21,
+      "type": "PURCHASE",
+      "category_hint": "Yeme-İçme",
+      "is_installment": false
+    },
+    {
+      "date": "07.05.2024",
+      "description": "MİGROS TİC A.Ş. CHIP-PARA KULLANIMI",
+      "amount": 0.0,
+      "type": "POINT_REDEMPTION",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "08.05.2024",
+      "description": "ZARA İSTİNYEPARK GİYİM",
+      "amount": 2272.68,
+      "type": "PURCHASE",
+      "category_hint": "Giyim & Alışveriş",
+      "is_installment": false
+    },
+    {
+      "date": "10.05.2024",
+      "description": "GETİR PERAKENDE LOJİSTİK",
+      "amount": 509.5,
+      "type": "PURCHASE",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "10.05.2024",
+      "description": "A101 YENİ MAĞAZACILIK A.Ş.",
+      "amount": 67.28,
+      "type": "PURCHASE",
+      "category_hint": "Market",
+      "is_installment": false
+    },
+    {
+      "date": "11.05.2024",
+      "description": "ZARA İSTİNYEPARK İPTAL / İADE",
+      "amount": -550.0,
+      "type": "REFUND",
+      "category_hint": "Giyim & Alışveriş",
+      "is_installment": false
+    },
+    {
+      "date": "12.05.2024",
+      "description": "TRENDYOL PAZARYERİ İSTANBUL",
+      "amount": 1784.45,
+      "type": "PURCHASE",
+      "category_hint": "Giyim & Alışveriş",
+      "is_installment": false
+    },
+    {
+      "date": "15.05.2024",
+      "description": "AKDİ / GECİKME FAİZİ",
+      "amount": 180.4,
+      "type": "FEE",
+      "category_hint": "Finansman Maliyeti",
+      "is_installment": false
+    },
+    {
+      "date": "15.05.2024",
+      "description": "%15 KAYNAK KULLANIMI DESTEKLEME FONU (KKDF)",
+      "amount": 27.06,
+      "type": "TAX",
+      "category_hint": "Vergi & Fon",
+      "is_installment": false
+    },
+    {
+      "date": "15.05.2024",
+      "description": "%15 BANKA VE SİGORTA MUAMELELERİ VERGİSİ (BSMV)",
+      "amount": 27.06,
+      "type": "TAX",
+      "category_hint": "Vergi & Fon",
+      "is_installment": false
+    }
+  ]
+}
