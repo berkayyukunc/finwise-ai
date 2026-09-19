@@ -5,7 +5,7 @@
 | **Model** | TF-IDF (`char_wb`, 2–5 gram, 20.000 öznitelik) + LightGBM (200 ağaç, 15 yaprak, `colsample_bytree=0.3`) |
 | **Görev** | Kredi kartı ekstresindeki işyeri açıklamasını 12 harcama kategorisinden birine atamak; emin değilse **"Diğer / Belirsiz"** demek |
 | **Artefakt** | `data/models/pos_lightgbm.joblib` (≈2,2 MB) · metrikler: `data/models/pos_model_metrics.json` |
-| **Yeniden üretim** | `make train` (deterministik: aynı tohum → aynı metrikler) · `make benchmark` |
+| **Yeniden üretim** | `make train` · `make benchmark`. Aynı makinede deterministiktir (aynı tohum → aynı metrik). Platformlar arasında LightGBM'in iş parçacığı/kayan nokta farkı nedeniyle küçük sapma olur: bu sürümde altın set macro-F1 **0,875** (macOS/arm64) ve **0,881** (Linux/x86-64, CI). Raporlanan rakamlar macOS ölçümleridir. |
 | **Sürüm kilidi** | scikit-learn 1.9.1 · lightgbm 4.7.0 (artefakt içine yazılır; yüklemede uyuşmazlık uyarısı verilir) |
 
 ## Amaçlanan kullanım ve kapsam dışı
