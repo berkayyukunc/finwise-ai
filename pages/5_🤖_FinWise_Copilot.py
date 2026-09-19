@@ -8,10 +8,12 @@ soru-cevap arayüzüdür. LLM içermez; yanıttaki her tutar araç çıktısınd
 import streamlit as st
 
 from src.copilot.agent import FinancialCopilot
+from src.ui import theme
 from src.utils.statement_loader import ensure_statement_loaded
 
 st.set_page_config(page_title="FinWise Copilot | FinWise-AI", page_icon="🤖", layout="wide")
 
+theme.inject_css(st)
 st.markdown("# 🤖 FinWise Copilot")
 st.caption("Kural tabanlı niyet yönlendirici + deterministik hesaplama araçları. LLM içermez; anlamadığı soruyu tahmin etmez, söyler.")
 

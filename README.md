@@ -39,7 +39,7 @@ Aşağıdaki her sayı `make train`, `make benchmark` ya da `make test` ile yeni
 | **Tahmin** | Aylık %95 aralığın ampirik kapsaması (100 simülasyon) | **%92** |
 | **Anomali** | Anomalisiz sentetik ekstrelerde yanlış alarm | **%0,5** (ekstrelerin %76'sında hiç alarm yok) |
 | **Kümeleme** | Centroid→arketip eşleme doğruluğu | 6/6 (4 farklı tohumda) · saflık > %95 |
-| **Kalite** | Test / kapsama / lint | 260 test · %95 satır+dal kapsaması · ruff temiz |
+| **Kalite** | Test / kapsama / lint | 273 test · %95 satır+dal kapsaması · ruff temiz |
 
 > **İlk sürümle fark:** İlk sürüm "%99,9 F1" bildiriyordu; bu, sentetik veride rastgele ayrımın yol açtığı şablon sızıntısıydı (test satırlarının %35,5'i eğitimde vardı; markalar ayrılınca F1 0,205'e düşüyordu). Hikâyenin tamamı: [`PROJE_AMACI_VE_DEGERLENDIRME.md`](PROJE_AMACI_VE_DEGERLENDIRME.md).
 
@@ -88,7 +88,7 @@ flowchart TD
 python3 -m venv venv && source venv/bin/activate
 make install        # kilitli bağımlılıklar + geliştirme araçları
 make train          # sentetik veri → sızıntısız değerlendirme → model + metrik JSON
-make check          # ruff + 260 test + %85 kapsama kapısı
+make check          # ruff + 273 test + %85 kapsama kapısı
 make run            # http://localhost:8501
 ```
 
@@ -101,6 +101,22 @@ docker build -t finwise-ai . && docker run --rm -p 7860:7860 finwise-ai
 Diğer hedefler: `make benchmark` (Arena tablosunu yeniden ölç) · `make samples` (8 yerleşimde PDF + `truth.json`).
 
 ---
+
+## Arayüz ve grafik paleti
+
+Açık, sıcak bir tema kullanılır (turuncu marka rengi, kağıt tonunda zemin). Renkler tek kaynaktan gelir
+([`src/ui/theme.py`](src/ui/theme.py)); sayfalarda elle yazılmış renk kalmadığını bir test doğrular.
+
+Palet göz kararı seçilmedi, **ölçüldü**: kategorik sıra renk körlüğü (CVD) ve normal görme ayrım
+eşiklerinden geçen adaylar arasından seçildi (komşu çiftlerde CVD ΔE 16,3 ve normal görme ΔE 19,6;
+eşikler 8 ve 15). Uygulanan kurallar:
+
+- 7 kategorik slot; fazlası 8. renk uydurulmadan nötr **"Diğer kategoriler"** kovasında toplanır.
+- Büyüklük zaten çubuk uzunluğundaysa renkle tekrar kodlanmaz (günlük harcama tek renktir).
+- SHAP'te yeşil/kırmızı yerine **ıraksak kırmızı ↔ mavi**: yeşil-kırmızı ikilisi en yaygın renk körlüğü
+  türünde ayırt edilemez. Renk tek başına anlam taşımaz; her kutucuk SHAP değerini ipucunda gösterir.
+- 3B galakside 6 kümeyi renkle ayırmak ölçülen eşiği geçemediği için popülasyon nötr çizilir ve
+  yalnızca kullanıcının kümesi vurgulanır.
 
 ## Ekstreniz ayrıştırılamazsa
 

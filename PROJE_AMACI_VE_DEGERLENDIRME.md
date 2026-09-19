@@ -33,7 +33,7 @@ Piyasadaki CRUD harcama takipçileri ve LLM sarmalayıcıları bir adayın ML, N
 | 10 | Anomalisiz ekstrede %5-8 işlem işaretleniyor; doküman "5D" diyor, kod 4D | Sabit `contamination`; ortalama/std maskeleme etkisi | Medyan/MAD (log tutar) + mükerrer çekim kuralı + destekleyici IF (mutlak eşik) | Yanlış alarm **%0,5** · `test_masking_effect_small_sample` |
 | 11 | 6 arketip etiketinin **6'sı da yanlış**; boş ekstre = "Taksit Mimarı" | K-Means küme kimliği keyfidir; sabit `ARCHETYPE_NAMES[id]` | Centroid'ler prototiplere Macar algoritmasıyla eşlenir; yetersiz veride etiket yok | 6/6 doğru, 4 tohumda · saflık > %95 |
 | 12 | `rag/agent.py` = 5 `elif`; `question.lower()` Türkçe I hatası (`GIDA`, `DIŞARI` tanınmıyor); anlaşılmayan soru özete düşüyor | İsimlendirme gerçeği yansıtmıyor | `src/copilot/`: niyet yönlendirici → araçlar → şablon; katlama ile normalizasyon; dürüst "bilmiyorum" | `test_every_amount_in_answer_comes_from_tool_result`, 16 yönlendirme testi |
-| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 260 test, %95 kapsama |
+| 13 | Git yok; `>=` bağımlılıklar "kilitli" diye anılıyor; Dockerfile'da kullanılmayan Tesseract; `print`; global RNG mutasyonu | MLOps iskeleti yok | Git + CI (lint → eğit → test + kapsama kapısı) + tam sürüm kilidi + model kartı + `logging` + yerel RNG | `make check`: ruff temiz, 273 test, %95 kapsama |
 
 Denetimin ortaya çıkardığı, v1 raporunda **olmayan** üç hata da çözüldü: (a) örnek PDF'lerde İ/Ş/Ğ harfleri `·` olarak basılıyordu (`TÜRK·YE ·· BANKASI`) ve bir "font onarımı" eşlemesi bunu gizliyordu; (b) anomali modülünde işyeri anahtarı sayıları maskelediği için farklı şubeler mükerrer çekim sayılıyordu; (c) tahmin modeli seçim ölçütü (14 günlük toplam hata) haftalık mevsimselliği yapısal olarak göremiyordu → günlük RMSE'ye geçildi. Üçü de yeni yazılan testler tarafından yakalandı.
 
@@ -88,7 +88,7 @@ Ayrıntı: [`SECURITY.md`](SECURITY.md). Özet: sistem PCI-DSS/KVKK uyumu **iddi
 │   ├── clustering/archetypes.py
 │   ├── copilot/agent.py                # (eski adı: rag/) niyet yönlendirici + deterministik araçlar
 │   └── utils/statement_loader.py       # PDF → DataFrame hattının tek giriş noktası
-├── tests/                              # 260 test (aşağıda)
+├── tests/                              # 273 test (aşağıda)
 ├── scripts/                            # generate_synthetic_pdf (8 yerleşim + truth.json) · benchmark_models
 ├── data/gold/pos_gold_set.csv          # 170 elle yazılmış değerlendirme satırı (eğitimde kullanılmaz)
 ├── data/models/                        # model + pos_model_metrics.json + benchmark_results.json
@@ -117,7 +117,7 @@ v1'deki 21 test ağırlıklı olarak "çökmüyor mu?" sorusunu soruyordu (`asse
 ```text
 $ make check
 ruff check .            → All checks passed!
-python -m pytest --cov  → 260 passed in ~25s · TOTAL coverage 95% (kapı: %85)
+python -m pytest --cov  → 273 passed in ~25s · TOTAL coverage 95% (kapı: %85)
 ```
 
 ---

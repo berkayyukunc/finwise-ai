@@ -7,10 +7,11 @@ Ana Uygulama & Ekstre Yükleme Merkezi (Dashboard)
 import os
 
 import pandas as pd
-import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 
 from src.clustering.archetypes import SpendingArchetypeClusterer
+from src.ui import theme
 from src.utils.statement_loader import load_classifier, process_statements
 
 st.set_page_config(
@@ -20,29 +21,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Özel CSS & Tasarım
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.2rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.2rem;
-    }
-    .metric-card {
-        background-color: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-    }
-    .stAlert {
-        border-radius: 10px;
-    }
-</style>
-""", unsafe_allow_html=True)
+theme.inject_css(st)
 
 
 @st.cache_resource
@@ -101,7 +80,8 @@ with st.sidebar:
 
 
 # Ana İçerik
-st.markdown("<div class='main-header'>FinWise-AI: Finansal Belge Zekası & Tahminleme Motoru</div>", unsafe_allow_html=True)
+st.markdown("<div class='main-header'>FinWise-AI</div>", unsafe_allow_html=True)
+st.markdown("<div class='tagline'>Finansal Belge Zekası &amp; Tahminleme Motoru</div>", unsafe_allow_html=True)
 st.caption("Document AI + POS sınıflandırma + bileşen tabanlı tahmin + XAI (SHAP) + kümeleme · tüm örnek ekstreler sentetiktir")
 
 # Veri Yükleme ve İşleme
@@ -181,31 +161,33 @@ st.divider()
 col_left, col_right = st.columns(2)
 
 with col_left:
-    st.markdown("#### 📅 Günlük Harcama Hızı (Burn Rate)")
+    st.markdown("#### 📅 Günlük Harcama Hızı")
     df_daily = positive_df.groupby("date")["amount"].sum().reset_index() if len(positive_df) > 0 and "date" in positive_df.columns else pd.DataFrame(columns=["date", "amount"])
-    fig_bar = px.bar(
-        df_daily,
-        x="date",
-        y="amount",
-        title="Günlük Harcama Dağılımı (TL)",
-        color="amount",
-        color_continuous_scale="Blues"
-    )
-    fig_bar.update_layout(template="plotly_dark", height=340, margin=dict(l=20, r=20, t=40, b=20))
+    fig_bar = go.Figure(go.Bar(
+        x=df_daily["date"], y=df_daily["amount"], marker_color=theme.BRAND, marker_line_width=0,
+        hovertemplate="%{x}<br><b>%{y:,.2f} TL</b><extra></extra>",
+    ))
+    fig_bar.update_layout(title="Günlük toplam harcama (TL)", template=theme.TEMPLATE, height=340, bargap=0.25, yaxis_title=None, xaxis_title=None)
     st.plotly_chart(fig_bar, use_container_width=True)
 
 with col_right:
-    st.markdown("#### 🍩 Kategori Bazlı Dağılım")
-    df_cat = positive_df.groupby("category")["amount"].sum().reset_index() if len(positive_df) > 0 and "category" in positive_df.columns else pd.DataFrame(columns=["category", "amount"])
-    fig_donut = px.pie(
-        df_cat,
-        names="category",
-        values="amount",
-        hole=0.45,
-        title="Harcama Kategorileri"
-    )
-    fig_donut.update_layout(template="plotly_dark", height=340, margin=dict(l=20, r=20, t=40, b=20))
-    st.plotly_chart(fig_donut, use_container_width=True)
+    st.markdown("#### 🎨 Kategori Bazlı Dağılım")
+    if len(positive_df) > 0 and "category" in positive_df.columns:
+        cat_series = theme.top_n_with_other(positive_df.groupby("category")["amount"].sum())
+        colors = theme.category_colors(cat_series.index)          # renk azalan büyüklüğe göre
+        labels, values = list(cat_series.index)[::-1], list(cat_series.values)[::-1]
+        fig_cat = go.Figure(go.Bar(
+            x=values, y=labels, orientation="h", marker_color=colors[::-1], marker_line_width=0,
+            text=[f"{v:,.0f} TL" for v in values], textposition="outside", cliponaxis=False,
+            hovertemplate="%{y}<br><b>%{x:,.2f} TL</b><extra></extra>",
+        ))
+        fig_cat.update_layout(title="Kategori başına harcama", template=theme.TEMPLATE, height=360,
+                              xaxis_title=None, yaxis_title=None, bargap=0.32, margin=dict(l=8, r=96, t=64, b=16))
+        fig_cat.update_yaxes(automargin=True, ticksuffix="  ")
+        fig_cat.update_xaxes(showticklabels=False, showgrid=False)
+        st.plotly_chart(fig_cat, use_container_width=True)
+    else:
+        st.caption("Kategori dağılımı için harcama bulunamadı.")
 
 # İşlemler Tablosu
 st.markdown("### 📋 Ayrıştırılmış ve Sınıflandırılmış İşlemler")

@@ -9,10 +9,12 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.predictive.wealth_simulator import DISCLAIMER, WealthSimulator
+from src.ui import theme
 
 st.set_page_config(page_title="Yatırım & DCA | FinWise-AI", page_icon="💰", layout="wide")
 
-st.markdown("# 💰 Tasarruf -> Bileşik Getiri & Varlık Simülatörü")
+theme.inject_css(st)
+st.markdown("# 💰 Tasarruf → Bileşik Getiri & Varlık Simülatörü")
 st.caption("Fisher Denklemi ile Enflasyon Arındırması & Düzenli Alım (DCA) Servet Projeksiyonu")
 
 # Parametre Girişleri (İki Sütun)
@@ -45,9 +47,9 @@ sim = WealthSimulator.simulate_dca(monthly_saving_tl=monthly_saving, horizon_yea
 
 # Özgürlük Göstergesi Kartı
 st.markdown(
-    f"<div style='background: linear-gradient(90deg, #1e3a8a, #312e81); padding: 18px; border-radius: 12px; border: 1px solid #4338ca; margin-bottom: 20px;'>"
-    f"<h3 style='color: #60a5fa; margin: 0;'>🕊️ {sim['freedom_metric']['headline']}</h3>"
-    f"<p style='color: #cbd5e1; margin-top: 6px; margin-bottom: 0;'>Aylık üreteceği tahmini reel pasif gelir: <b>{sim['freedom_metric']['monthly_passive_income_today_tl']:,.2f} TL (Bugünün parasıyla)</b></p>"
+    f"<div style='background: linear-gradient(92deg, {theme.BRAND_SOFT}, {theme.CARD}); padding: 18px 20px; border-radius: 14px; border: 1px solid {theme.BORDER}; border-left: 4px solid {theme.BRAND}; margin-bottom: 20px;'>"
+    f"<h3 style='color: {theme.BRAND_DEEP}; margin: 0;'>🕊️ {sim['freedom_metric']['headline']}</h3>"
+    f"<p style='color: {theme.INK_SOFT}; margin-top: 6px; margin-bottom: 0;'>Aylık üreteceği tahmini reel pasif gelir: <b>{sim['freedom_metric']['monthly_passive_income_today_tl']:,.2f} TL (Bugünün parasıyla)</b></p>"
     f"</div>",
     unsafe_allow_html=True
 )
@@ -77,16 +79,12 @@ st.markdown(f"### 📈 Aylar Bazında Varlık Birikim Eğrileri ({'Reel Satın A
 
 curve_key = "real_curve" if is_real else "nominal_curve"
 months_count = horizon * 12
-x_months = [f"{m}. Ay" for m in range(1, months_count + 1)]
+x_months = list(range(1, months_count + 1))   # kategorik metin değil sayısal ay: eksen 6 ayda bir işaretlenir
 
 fig_wealth = go.Figure()
 
-colors = {
-    "BIST 100 Hisse Fonu": "#3b82f6",
-    "Gram Altın (Darphane / Fon)": "#eab308",
-    "Para Piyasası / Mevduat Fonu": "#10b981",
-    "S&P 500 / Global Teknoloji": "#a855f7"
-}
+# Varlık renkleri kategorik paletin ilk 4 slotu: bu dörtlü "tüm çiftler" ayrım eşiğini geçer (ölçüldü).
+colors = dict(zip(sim["results_by_asset"], theme.CATEGORICAL))
 
 for asset_name, asset_info in sim["results_by_asset"].items():
     fig_wealth.add_trace(go.Scatter(
@@ -94,7 +92,7 @@ for asset_name, asset_info in sim["results_by_asset"].items():
         y=asset_info[curve_key],
         mode="lines",
         name=asset_name,
-        line=dict(color=colors.get(asset_name, "#ffffff"), width=2.5)
+        line=dict(color=colors[asset_name], width=2.5)
     ))
 
 # Ana para referans çizgisi
@@ -103,16 +101,16 @@ fig_wealth.add_trace(go.Scatter(
     y=[monthly_saving * m for m in range(1, months_count + 1)],
     mode="lines",
     name="Yatırılan Ana Para",
-    line=dict(color="#64748b", width=1.5, dash="dot")
+    line=dict(color=theme.INK_MUTED, width=1.5, dash="dot")
 ))
 
 fig_wealth.update_layout(
     title=f"Düzenli Alım (DCA) Servet Projeksiyonu - {horizon} Yıl",
     xaxis_title="Vade (Ay)",
+    xaxis=dict(dtick=6, tickformat="d"),
     yaxis_title="Toplam Varlık Değeri (TL)",
-    template="plotly_dark",
+    template=theme.TEMPLATE,
     height=450,
-    margin=dict(l=20, r=20, t=40, b=20)
 )
 
 st.plotly_chart(fig_wealth, use_container_width=True)

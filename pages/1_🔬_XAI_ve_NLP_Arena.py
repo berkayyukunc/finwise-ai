@@ -15,8 +15,10 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.nlp.explainer import POSShapExplainer
+from src.ui import theme
 
 st.set_page_config(page_title="XAI & NLP Arena | FinWise-AI", page_icon="🔬", layout="wide")
+theme.inject_css(st)
 st.markdown("# 🔬 Açıklanabilir Yapay Zeka (XAI) & NLP Model Arenası")
 st.caption("SHAP TreeExplainer ile toplanabilir (additive) karar açıklaması ve sızıntısız değerlendirme sonuçları")
 
@@ -60,9 +62,9 @@ if user_input:
         st.warning(f"Güven eşiğin (%{explainer.abstain_threshold * 100:.0f}) altında: üretimde bu işlem **'Diğer / Belirsiz'** olarak etiketlenir; model zorla kategori atamaz.")
 
     st.markdown("#### Kelime Bazlı SHAP Isı Haritası")
-    st.caption(f"Modelin gördüğü temizlenmiş metin: `{result['clean_text']}` · Yeşil: sınıfı destekler, kırmızı: uzaklaştırır (log-odds).")
+    st.caption(f"Modelin gördüğü temizlenmiş metin: `{result['clean_text']}` · 🔴 kırmızı: kategoriyi destekler · 🔵 mavi: uzaklaştırır. Bir kutucuğun üzerine gelince tam SHAP değeri görünür.")
     st.markdown(
-        f"<div style='background-color: #0f172a; padding: 20px; border-radius: 10px; border: 1px solid #334155; font-size: 1.25rem;'>{result['html_explanation']}</div>",
+        f"<div style='background: #ffffff; padding: 20px; border-radius: 14px; border: 1px solid rgba(26,26,25,0.10); font-size: 1.2rem; line-height: 2.1;'>{result['html_explanation']}</div>",
         unsafe_allow_html=True,  # html_explanation içindeki tüm kullanıcı metni html.escape'ten geçer
     )
 
@@ -75,8 +77,9 @@ if user_input:
 
     features = [f[0] for f in result["top_features"]][::-1]
     scores = [f[1] for f in result["top_features"]][::-1]
-    fig = go.Figure(go.Bar(x=scores, y=[f"'{f}'" for f in features], orientation="h", marker_color=["#22c55e" if s > 0 else "#ef4444" for s in scores], text=[f"{s:+.3f}" for s in scores], textposition="outside"))
-    fig.update_layout(title="En Etkili Aktif N-Gram'lar", xaxis_title="SHAP (log-odds)", template="plotly_dark", height=340, margin=dict(l=20, r=40, t=40, b=20))
+    fig = go.Figure(go.Bar(x=scores, y=[f"'{f}'" for f in features], orientation="h", marker_color=[theme.DIVERGING_POS if s > 0 else theme.DIVERGING_NEG for s in scores], text=[f"{s:+.3f}" for s in scores], textposition="outside"))
+    fig.update_layout(title="En etkili n-gram'lar · kırmızı destekler, mavi uzaklaştırır", xaxis_title="SHAP katkısı (log-odds)",
+                      template=theme.TEMPLATE, height=380, bargap=0.35, margin=dict(l=8, r=80, t=64, b=16))
     st.plotly_chart(fig, use_container_width=True)
 
 st.divider()

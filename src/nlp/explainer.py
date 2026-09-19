@@ -16,6 +16,10 @@ Tasarım İlkeleri (Mülakat İçin):
    kelimeler ('TIC', 'A.S.') kararı etkilemediği için renklendirilmez.
 4. Değerler log-odds (ham margin) uzayındadır; renk yoğunluğu metin içi en büyük
    mutlak katkıya göre normalize edilir (keyfi sabit eşik yoktur).
+5. Renk çifti yeşil/kırmızı DEĞİL, ıraksak kırmızı/mavidir: yeşil-kırmızı ikilisi en yaygın
+   renk körlüğü türlerinde ayırt edilemez. Kırmızı = sınıfı destekler, mavi = uzaklaştırır
+   (SHAP'in kendi gösterim geleneğiyle uyumlu). Renk tek başına anlam taşımaz: her kutucuk
+   SHAP değerini `title` ipucunda yazar.
 """
 
 import html
@@ -119,7 +123,7 @@ class POSShapExplainer:
 
     @staticmethod
     def render_html(words: List[Tuple[str, float]]) -> str:
-        """XSS korumalı kelime ısı haritası. Yeşil: sınıfı destekler, kırmızı: uzaklaştırır."""
+        """XSS korumalı kelime ısı haritası. Kırmızı: sınıfı destekler, mavi: uzaklaştırır."""
         scale = max((abs(s) for _, s in words), default=0.0)
         spans = []
         for word, score in words:
@@ -128,7 +132,7 @@ class POSShapExplainer:
             if strength < 0.10:
                 spans.append(f"<span style='padding: 3px 4px; margin: 2px; color: #64748b;'>{w_esc}</span>")
                 continue
-            rgb = "34, 197, 94" if score > 0 else "239, 68, 68"
+            rgb = "208, 59, 59" if score > 0 else "42, 120, 214"  # bkz. modül notu 5
             spans.append(
                 f"<span title='SHAP {score:+.3f}' style='background-color: rgba({rgb}, {0.15 + 0.70 * strength:.2f}); "
                 f"padding: 3px 6px; margin: 2px; border-radius: 4px; font-weight: 600;'>{w_esc}</span>"

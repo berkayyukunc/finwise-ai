@@ -6,15 +6,16 @@ K-Means++ ile kümeleyip PCA ile 3D Galaksi koordinatlarına taşır.
 """
 
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
 from src.clustering.archetypes import SpendingArchetypeClusterer
+from src.ui import theme
 from src.utils.statement_loader import ensure_statement_loaded
 
 st.set_page_config(page_title="Harcama Galaksisi | FinWise-AI", page_icon="🌌", layout="wide")
 
+theme.inject_css(st)
 st.markdown("# 🌌 Senin Harcama Galaksin (Unsupervised Behavioral Clustering)")
 st.caption("8 Boyutlu Davranış Uzayı + K-Means++ ($k=6$) + PCA 3D İndirgeme")
 
@@ -56,18 +57,17 @@ with c2:
         "Abonelik", "Hafta Sonu", "Taksit Oranı", "Sepet Hacmi"
     ]
     fig_radar = go.Figure(data=go.Scatterpolar(
-        r=feat_vec,
-        theta=categories,
+        r=list(feat_vec) + [feat_vec[0]],
+        theta=categories + [categories[0]],
         fill="toself",
-        fillcolor="rgba(59, 130, 246, 0.4)",
-        line=dict(color="#3b82f6", width=2)
+        fillcolor="rgba(235, 104, 52, 0.22)",
+        line=dict(color=theme.BRAND, width=2),
+        hovertemplate="%{theta}: %{r:.0%}<extra></extra>",
     ))
     fig_radar.update_layout(
-        polar=dict(radialaxis=dict(visible=True, range=[0, 1])),
-        showlegend=False,
-        template="plotly_dark",
-        height=320,
-        margin=dict(l=40, r=40, t=20, b=20)
+        polar=dict(bgcolor=theme.SURFACE, radialaxis=dict(visible=True, range=[0, 1], tickformat=".0%", gridcolor=theme.GRID, tickfont=dict(size=10, color=theme.INK_MUTED)),
+                   angularaxis=dict(gridcolor=theme.GRID, tickfont=dict(size=11, color=theme.INK_SOFT))),
+        showlegend=False, template=theme.TEMPLATE, height=330, margin=dict(l=50, r=50, t=20, b=20),
     )
     st.plotly_chart(fig_radar, use_container_width=True)
 
@@ -75,46 +75,40 @@ st.divider()
 
 # 3D Galaksi Saçılım Grafiği (Plotly 3D)
 st.markdown("### 🪐 3 Boyutlu Finansal Galaksi Haritası")
-st.caption("Sentetik popülasyonun 6 kümesi ve ekstrenin bu uzaydaki konumu:")
+st.caption("Renk kümeler arasında karşılaştırma için değil, **senin kümeni** ayırt etmek içindir: 6 kümeyi aynı anda renkle ayırmak, saçılım grafiğinde ölçülen ayrım eşiğini geçemiyor. Küme adları imleçle gelen ipucunda yazar.")
 
 pop_df = pd.DataFrame(result["population_samples"])
 
-fig_3d = px.scatter_3d(
-    pop_df,
-    x="x",
-    y="y",
-    z="z",
-    color="archetype",
-    title="Popülasyon Harcama Kümeleri (PCA 3D Projeksiyonu)",
-    opacity=0.6,
-    hover_data=["archetype"]
-)
+own_cluster = result["cluster_id"]
+pop_df["kume"] = pop_df["cluster"].map(lambda c: "Senin kümen" if c == own_cluster else "Diğer profiller")
 
-# Kullanıcının konumunu altın bir yıldız olarak ekle
+fig_3d = go.Figure()
+for label, color, size, opacity in [("Diğer profiller", theme.OTHER_COLOR, 3.5, 0.45), ("Senin kümen", theme.BRAND, 5.5, 0.85)]:
+    sub = pop_df[pop_df["kume"] == label]
+    fig_3d.add_trace(go.Scatter3d(
+        x=sub["x"], y=sub["y"], z=sub["z"], mode="markers", name=f"{label} ({len(sub)})",
+        marker=dict(size=size, color=color, opacity=opacity, line=dict(width=0)),
+        customdata=sub[["archetype"]], hovertemplate="%{customdata[0]}<extra></extra>",
+    ))
+
 user_x = result["user_coords"]["x"]
 user_y = result["user_coords"]["y"]
 user_z = result["user_coords"]["z"]
 
 fig_3d.add_trace(go.Scatter3d(
-    x=[user_x],
-    y=[user_y],
-    z=[user_z],
-    mode="markers+text",
-    marker=dict(size=14, color="#facc15", symbol="diamond", line=dict(color="#ffffff", width=2)),
-    text=["⭐ SEN BURADASIN!"],
-    textposition="top center",
-    name="Senin Konumun"
+    x=[user_x], y=[user_y], z=[user_z], mode="markers+text",
+    marker=dict(size=13, color=theme.STATUS["warning"], symbol="diamond", line=dict(color="#ffffff", width=2)),
+    text=["⭐ SEN"], textposition="top center", textfont=dict(color=theme.INK, size=12),
+    name="Senin konumun", hovertemplate="Senin konumun<extra></extra>",
 ))
 
 fig_3d.update_layout(
-    template="plotly_dark",
-    height=600,
-    margin=dict(l=10, r=10, t=40, b=10),
-    scene=dict(
-        xaxis_title="PCA 1",
-        yaxis_title="PCA 2",
-        zaxis_title="PCA 3"
-    )
+    title="Popülasyon içindeki konumun (PCA 3B)",
+    template=theme.TEMPLATE, height=600, margin=dict(l=10, r=10, t=48, b=10),
+    scene=dict(xaxis_title="PCA 1", yaxis_title="PCA 2", zaxis_title="PCA 3",
+               xaxis=dict(backgroundcolor=theme.SURFACE, gridcolor=theme.GRID),
+               yaxis=dict(backgroundcolor=theme.SURFACE, gridcolor=theme.GRID),
+               zaxis=dict(backgroundcolor=theme.SURFACE, gridcolor=theme.GRID)),
 )
 
 st.plotly_chart(fig_3d, use_container_width=True)

@@ -1,0 +1,14 @@
+# Arayüz teması. Renk değerleri src/ui/theme.py ile aynı kaynaktan gelir.
+[theme]
+base = "light"
+primaryColor = "#eb6834"
+backgroundColor = "#fdfaf6"
+secondaryBackgroundColor = "#f6efe6"
+textColor = "#1a1a19"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+maxUploadSize = 15

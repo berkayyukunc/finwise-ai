@@ -9,10 +9,12 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from src.predictive.forecasting import SpendingForecaster
+from src.ui import theme
 from src.utils.statement_loader import ensure_statement_loaded
 
 st.set_page_config(page_title="Tahmin & Anomali | FinWise-AI", page_icon="📈", layout="wide")
 
+theme.inject_css(st)
 st.markdown("# 📈 Gelecek 30 Gün: Yükümlülükler + Harcama Tahmini")
 st.caption("Deterministik bileşenler (taksit, abonelik) ayrı; stokastik bileşen walk-forward ile seçilen modelle ve blok bootstrap aralığıyla tahmin edilir.")
 
@@ -34,11 +36,11 @@ else:
     t2.metric("%95 Aralık (30 günlük toplam)", f"{fc['risk_lower_monthly']:,.0f} – {fc['risk_upper_monthly']:,.0f} TL")
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=fc["historical_daily_dates"], y=fc["historical_daily_amounts"], mode="lines+markers", name="Geçmiş (isteğe bağlı)", line=dict(color="#3b82f6", width=2)))
+    fig.add_trace(go.Scatter(x=fc["historical_daily_dates"], y=fc["historical_daily_amounts"], mode="lines+markers", name="Geçmiş (isteğe bağlı harcama)", line=dict(color=theme.BRAND, width=2), marker=dict(size=5)))
     fig.add_trace(go.Scatter(x=fc["forecast_dates"], y=fc["forecast_upper_95"], mode="lines", line=dict(width=0), showlegend=False, hoverinfo="skip"))
-    fig.add_trace(go.Scatter(x=fc["forecast_dates"], y=fc["forecast_lower_95"], mode="lines", line=dict(width=0), fill="tonexty", fillcolor="rgba(16, 185, 129, 0.15)", name="Günlük %95 bant"))
-    fig.add_trace(go.Scatter(x=fc["forecast_dates"], y=fc["forecast_daily_mean"], mode="lines", name="Tahmin", line=dict(color="#10b981", width=2, dash="dash")))
-    fig.update_layout(title="Günlük İsteğe Bağlı Harcama ve 30 Günlük Projeksiyon", xaxis_title="Tarih", yaxis_title="TL", template="plotly_dark", height=420, margin=dict(l=20, r=20, t=40, b=20))
+    fig.add_trace(go.Scatter(x=fc["forecast_dates"], y=fc["forecast_lower_95"], mode="lines", line=dict(width=0), fill="tonexty", fillcolor="rgba(42, 120, 214, 0.14)", name="Günlük %95 bant"))
+    fig.add_trace(go.Scatter(x=fc["forecast_dates"], y=fc["forecast_daily_mean"], mode="lines", name="Tahmin", line=dict(color=theme.CATEGORICAL[1], width=2.5, dash="dash")))
+    fig.update_layout(title="Günlük İsteğe Bağlı Harcama ve 30 Günlük Projeksiyon", xaxis_title="Tarih", yaxis_title="TL", template=theme.TEMPLATE, height=420)
     st.plotly_chart(fig, use_container_width=True)
 
     val = fc["validation"]
